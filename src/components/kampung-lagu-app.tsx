@@ -103,23 +103,6 @@ export default function KampungLaguApp() {
     localStorage.setItem(STORAGE_KEYS.view, JSON.stringify(view));
   }, [view]);
 
-  // Attach event listener to generate button
-  useEffect(() => {
-    const btn = generateBtnRef.current;
-    if (!btn) return;
-
-    const handleClick = async () => {
-      try {
-        await generateTrack();
-      } catch (e) {
-        console.error('Generate error:', e);
-      }
-    };
-
-    btn.addEventListener('click', handleClick);
-    return () => btn.removeEventListener('click', handleClick);
-  }, [generateTrack]);
-
   const filteredTracks = useMemo(() => {
     const query = search.toLowerCase().trim();
     if (!query) return tracks;
@@ -250,6 +233,23 @@ export default function KampungLaguApp() {
       setNotice(`Error generating audio: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   }, [draft, setTracks, setNotice, setDraft]);
+
+  // Attach event listener to generate button
+  useEffect(() => {
+    const btn = generateBtnRef.current;
+    if (!btn) return;
+
+    const handleClick = async () => {
+      try {
+        await generateTrack();
+      } catch (e) {
+        console.error('Generate error:', e);
+      }
+    };
+
+    btn.addEventListener('click', handleClick);
+    return () => btn.removeEventListener('click', handleClick);
+  }, [generateTrack]);
 
   const deleteTrack = (id: string) => {
     setTracks((prev) => prev.filter((t) => t.id !== id));
