@@ -179,7 +179,7 @@ export default function KampungLaguApp() {
       note: isMockTrack
         ? "Ini placeholder lokal. Sambungkan endpoint open-source agar bisa generate audio real."
         : "Sedang generate audio...",
-      audioUrl: isMockTrack ? "/test-audio.mp3" : undefined,
+      audioUrl: isMockTrack ? `/test-audio.mp3?t=${Date.now()}` : undefined,
     };
 
     setTracks((prev) => [newTrack, ...prev]);
