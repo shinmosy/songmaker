@@ -1,79 +1,183 @@
 import type { NextRequest } from 'next/server';
 
+import {
+  buildMusicGenerationPayload,
+  extractProviderTaskId,
+  getProviderBaseUrl,
+  getProviderLabel,
+  resolveProviderTarget,
+} from '../../../lib/songmaker-provider.mjs';
+
+const MODAL_ENDPOINT = 'https://shinmosy--songmaker-inference-generate-endpoint.modal.run';
+
+type GenerateBody = {
+  prompt?: string;
+  duration?: number;
+  title?: string;
+  description?: string;
+  lyrics?: string;
+  model?: string;
+  type?: 'Instrumental' | 'Vocal';
+  tags?: string[];
+  provider?: 'modal' | 'sunoapi' | 'kie';
+  apiKeys?: string;
+};
+
+function pickApiKey(rawValue = '') {
+  return rawValue
+    .split('\n')
+    .map((line) => line.trim())
+    .find(Boolean) || '';
+}
+
+function getEnvProviderKey(provider: string) {
+  if (provider === 'sunoapi') {
+    return process.env.SUNOAPI_KEY || process.env.SUNO_API_KEY || '';
+  }
+
+  if (provider === 'kie') {
+    return process.env.KIE_API_KEY || process.env.KIEAI_API_KEY || '';
+  }
+
+  return '';
+}
+
+function getCallbackUrl(request: NextRequest) {
+  return `${request.nextUrl.origin}/api/provider-callback/songmaker`;
+}
+
+async function parseJsonSafe(response: Response) {
+  const text = await response.text();
+
+  if (!text) return {};
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { raw: text };
+  }
+}
+
+async function callModal(body: GenerateBody) {
+  const modalResponse = await fetch(MODAL_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      prompt: body.prompt,
+      duration: body.duration ?? 10,
+    }),
+  });
+
+  const result = await parseJsonSafe(modalResponse);
+
+  if (!modalResponse.ok) {
+    throw new Error(`Modal API error: ${modalResponse.status}`);
+  }
+
+  if (!result.success || !result.audio) {
+    throw new Error(result.error || 'Modal generation failed');
+  }
+
+  return {
+    success: true,
+    audio: result.audio,
+    format: result.format || 'wav',
+    providerUsed: 'modal',
+    note: 'Generated with Modal MusicGen',
+  };
+}
+
+async function createSunoCompatibleTask(request: NextRequest, body: GenerateBody, provider: 'sunoapi' | 'kie', apiKey: string) {
+  const baseUrl = getProviderBaseUrl(provider);
+  const providerLabel = getProviderLabel(provider);
+  const payload = buildMusicGenerationPayload({
+    title: body.title,
+    description: body.description || body.prompt,
+    lyrics: body.lyrics,
+    tags: body.tags,
+    type: body.type,
+    model: body.model,
+    callBackUrl: getCallbackUrl(request),
+  });
+
+  const generateResponse = await fetch(`${baseUrl}/api/v1/generate`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const generateResult = await parseJsonSafe(generateResponse);
+  const message = generateResult.msg || generateResult.message || generateResult.error || '';
+
+  if (!generateResponse.ok || (typeof generateResult.code === 'number' && generateResult.code !== 200)) {
+    throw new Error(`${providerLabel}: ${message || `Generate request failed (${generateResponse.status})`}`);
+  }
+
+  const taskId = extractProviderTaskId(generateResult);
+  if (!taskId) {
+    throw new Error(`${providerLabel}: taskId tidak ditemukan dari response generate`);
+  }
+
+  return {
+    success: true,
+    queued: true,
+    taskId,
+    providerUsed: provider,
+    note: `${providerLabel}: task dibuat, sedang diproses...`,
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { prompt, duration = 10 } = body;
+    const body = (await request.json()) as GenerateBody;
+    const prompt = body.prompt?.trim() || body.description?.trim();
 
     if (!prompt) {
-      return Response.json(
-        { success: false, error: 'Prompt is required' },
-        { status: 400 }
-      );
+      return Response.json({ success: false, error: 'Prompt is required' }, { status: 400 });
     }
 
-    const hfToken = process.env.HUGGINGFACE_API_KEY;
-    
-    // Fallback: jika HF key tidak ada, gunakan test audio
-    if (!hfToken) {
-      console.warn('HuggingFace API key not configured, using test audio');
-      return Response.json({
-        success: true,
-        audio: null, // Frontend akan gunakan /test-audio.mp3
-        prompt: prompt,
-        duration: duration,
-        format: 'mp3',
-        note: 'Using test audio (configure HUGGINGFACE_API_KEY for real generation)',
-      });
+    const requestedProvider = body.provider || 'modal';
+    const selectedApiKey = pickApiKey(body.apiKeys || '') || getEnvProviderKey(requestedProvider);
+    const providerTarget = resolveProviderTarget({ provider: requestedProvider, apiKey: selectedApiKey });
+
+    if (providerTarget.provider === 'modal') {
+      const modalResult = await callModal({ ...body, prompt });
+      const note =
+        requestedProvider !== 'modal' && providerTarget.reason === 'missing_api_key'
+          ? `${modalResult.note} (fallback karena API key ${getProviderLabel(requestedProvider)} belum ada)`
+          : modalResult.note;
+
+      return Response.json({ ...modalResult, note });
     }
 
-    // Call HuggingFace Inference API
-    const hfResponse = await fetch(
-      'https://api-inference.huggingface.co/models/facebook/musicgen-medium',
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${hfToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          inputs: prompt,
-          parameters: {
-            max_length: Math.min(duration * 50, 1500), // HF uses tokens, ~50 tokens per second
-          },
-        }),
-      }
+    const result = await createSunoCompatibleTask(
+      request,
+      { ...body, prompt },
+      providerTarget.provider as 'sunoapi' | 'kie',
+      providerTarget.apiKey
     );
 
-    if (!hfResponse.ok) {
-      const error = await hfResponse.text();
-      console.error('HF API error:', error);
-      return Response.json(
-        { success: false, error: `HuggingFace API error: ${hfResponse.status}` },
-        { status: hfResponse.status }
-      );
-    }
-
-    // HF returns binary audio (WAV)
-    const audioBuffer = await hfResponse.arrayBuffer();
-    const audioBase64 = Buffer.from(audioBuffer).toString('base64');
-
-    return Response.json({
-      success: true,
-      audio: audioBase64,
-      prompt: prompt,
-      duration: duration,
-      format: 'wav',
-      note: 'Generated with HuggingFace MusicGen',
-    });
+    return Response.json(result, { status: 202 });
   } catch (error) {
     console.error('Generate error:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    const status = /permission|unauthorized|access/i.test(message)
+      ? 401
+      : /required|invalid|limit|taskId|failed/i.test(message)
+        ? 400
+        : 500;
+
     return Response.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: message,
       },
-      { status: 500 }
+      { status }
     );
   }
 }

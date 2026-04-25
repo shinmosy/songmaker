@@ -14,8 +14,9 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Kampung Lagu OSS",
-  description: "Open-source music generator MVP built with Next.js for Vercel.",
+  title: "SongMaker",
+  description: "Studio musik AI hitam-putih dengan library lokal, player persistent, dan PWA support.",
+  manifest: "/manifest.webmanifest",
 };
 
 export default function RootLayout({
