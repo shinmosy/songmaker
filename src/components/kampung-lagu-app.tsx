@@ -153,6 +153,7 @@ export default function KampungLaguApp() {
   };
 
   const generateTrack = async () => {
+    console.log("generateTrack called");
     if (!draft.description.trim()) {
       setNotice("Deskripsi utama wajib diisi dulu.");
       return;
