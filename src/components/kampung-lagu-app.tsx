@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 
 type View = "create" | "library" | "settings";
 type Mode = "Simple" | "Advanced" | "Sounds";
@@ -67,6 +67,7 @@ export default function KampungLaguApp() {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [settings, setSettings] = useState<Settings>(defaultSettings);
   const [notice, setNotice] = useState("");
+  const generateBtnRef = useRef<HTMLButtonElement>(null);
   const [search, setSearch] = useState("");
 
   // Hydrate from localStorage
@@ -101,6 +102,23 @@ export default function KampungLaguApp() {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.view, JSON.stringify(view));
   }, [view]);
+
+  // Attach event listener to generate button
+  useEffect(() => {
+    const btn = generateBtnRef.current;
+    if (!btn) return;
+
+    const handleClick = async () => {
+      try {
+        await generateTrack();
+      } catch (e) {
+        console.error('Generate error:', e);
+      }
+    };
+
+    btn.addEventListener('click', handleClick);
+    return () => btn.removeEventListener('click', handleClick);
+  }, [generateTrack]);
 
   const filteredTracks = useMemo(() => {
     const query = search.toLowerCase().trim();
@@ -424,6 +442,7 @@ export default function KampungLaguApp() {
               {/* Actions */}
               <div className="flex gap-2 pt-4">
                 <button
+                  ref={generateBtnRef}
                   onClick={async () => {
                     try {
                       await generateTrack();
