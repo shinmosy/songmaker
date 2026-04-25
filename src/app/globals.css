@@ -101,6 +101,35 @@ select:focus {
   background: var(--accent);
 }
 
+.songmaker-elegant {
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.95), rgba(245, 243, 239, 0.96) 45%, rgba(241, 236, 228, 0.96) 100%),
+    #f5f3ef;
+}
+
+.songmaker-elegant header {
+  backdrop-filter: blur(18px);
+}
+
+.songmaker-elegant .rounded-3xl,
+.songmaker-elegant .rounded-2xl {
+  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.06);
+}
+
+.songmaker-elegant input,
+.songmaker-elegant textarea,
+.songmaker-elegant select {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.songmaker-elegant button:hover {
+  transform: translateY(-1px);
+}
+
+.songmaker-elegant audio {
+  filter: grayscale(1);
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
