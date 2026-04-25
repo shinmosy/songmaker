@@ -424,7 +424,13 @@ export default function KampungLaguApp() {
               {/* Actions */}
               <div className="flex gap-2 pt-4">
                 <button
-                  onClick={() => generateTrack()}
+                  onClick={async () => {
+                    try {
+                      await generateTrack();
+                    } catch (e) {
+                      console.error('Generate error:', e);
+                    }
+                  }}
                   className="flex-1 rounded bg-white px-4 py-2 font-medium text-black hover:bg-gray-200 transition"
                 >
                   Generate
