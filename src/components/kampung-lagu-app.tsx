@@ -90,27 +90,23 @@ export default function KampungLaguApp() {
 
   // Persist library
   useEffect(() => {
-    if (!isHydrated) return;
     localStorage.setItem(STORAGE_KEYS.library, JSON.stringify(tracks));
-  }, [tracks, isHydrated]);
+  }, [tracks]);
 
   // Persist draft
   useEffect(() => {
-    if (!isHydrated) return;
     localStorage.setItem(STORAGE_KEYS.draft, JSON.stringify(draft));
-  }, [draft, isHydrated]);
+  }, [draft]);
 
   // Persist settings
   useEffect(() => {
-    if (!isHydrated) return;
     localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(settings));
-  }, [settings, isHydrated]);
+  }, [settings]);
 
   // Persist view
   useEffect(() => {
-    if (!isHydrated) return;
     localStorage.setItem(STORAGE_KEYS.view, JSON.stringify(view));
-  }, [view, isHydrated]);
+  }, [view]);
 
   const filteredTracks = useMemo(() => {
     const query = search.toLowerCase().trim();
