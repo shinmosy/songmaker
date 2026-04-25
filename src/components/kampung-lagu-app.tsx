@@ -65,7 +65,6 @@ const defaultSettings: Settings = {
 };
 
 export default function KampungLaguApp() {
-  const [isHydrated, setIsHydrated] = useState(false);
   const [view, setView] = useState<View>("create");
   const [draft, setDraft] = useState<Draft>(defaultDraft);
   const [tracks, setTracks] = useState<Track[]>([]);
@@ -84,8 +83,6 @@ export default function KampungLaguApp() {
     if (savedDraft) setDraft(JSON.parse(savedDraft));
     if (savedSettings) setSettings(JSON.parse(savedSettings));
     if (savedView) setView(JSON.parse(savedView));
-
-    setIsHydrated(true);
   }, []);
 
   // Persist library
@@ -248,15 +245,10 @@ export default function KampungLaguApp() {
     setNotice("Track dihapus.");
   };
 
-  if (!isHydrated) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-black">
-        <p className="text-gray-400">Loading...</p>
-      </div>
-    );
-  }
+  const endpointReady = Boolean(settings.endpointUrl.trim());
+  const totalTracks = tracks.length;
 
-  // Render full UI regardless of hydration state
+  // Render full UI
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Header */}
