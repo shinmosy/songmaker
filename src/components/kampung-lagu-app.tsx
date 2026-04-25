@@ -245,9 +245,6 @@ export default function KampungLaguApp() {
     setNotice("Track dihapus.");
   };
 
-  const endpointReady = Boolean(settings.endpointUrl.trim());
-  const totalTracks = tracks.length;
-
   // Render full UI
   return (
     <div className="min-h-screen bg-black text-white">
