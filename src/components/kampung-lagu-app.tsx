@@ -171,6 +171,7 @@ export default function KampungLaguApp() {
       status: "generating",
       createdAt: new Date().toISOString(),
       note: "Sedang generate audio dengan HuggingFace MusicGen...",
+      audioUrl: undefined,
     };
 
     setTracks((prev) => [newTrack, ...prev]);
