@@ -1253,7 +1253,7 @@ export default function KampungLaguApp() {
                               playTrack(track);
                             }}
                             disabled={!playableAudioUrl}
-                            className="rounded-full bg-white px-4 py-2 text-sm font-medium text-white hover:bg-[#252d48] disabled:cursor-not-allowed disabled:bg-gray-800 disabled:text-[#a0aec0]"
+                            className="rounded-full bg-white px-4 py-2 text-sm font-medium text-white hover:bg-[#252d48] disabled:cursor-not-allowed disabled:loud-card disabled:text-[#a0aec0]"
                           >
                             {!playableAudioUrl ? "Belum siap" : nowPlaying?.id === track.id ? (isPlayerPaused ? "Resume" : "Pause") : "Play"}
                           </button>
@@ -1326,7 +1326,7 @@ export default function KampungLaguApp() {
             </div>
 
             <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
-              <div className="space-y-4 rounded-2xl vengence-card">
+              <div className="space-y-4 rounded-2xl loud-card">
                 <div>
                   <label className="mb-2 block text-sm font-medium text-[#a0aec0]">Model Version</label>
                   <select
@@ -1406,13 +1406,13 @@ export default function KampungLaguApp() {
                 <button
                   type="button"
                   onClick={saveSettings}
-                  className="w-full rounded-2xl vengence-button"
+                  className="w-full rounded-2xl loud-button"
                 >
                   Save Settings
                 </button>
               </div>
 
-              <div className="space-y-4 rounded-2xl vengence-card">
+              <div className="space-y-4 rounded-2xl loud-card">
                 <div>
                   <p className="text-xs uppercase tracking-[0.2em] text-[#a0aec0]">Install aplikasi</p>
                   <h3 className="mt-2 text-lg font-semibold text-white">PWA Install</h3>
@@ -1561,7 +1561,7 @@ export default function KampungLaguApp() {
                       step={0.1}
                       value={Math.min(currentTime, Math.max(duration, currentTime, 1))}
                       onChange={(event) => handleSeek(Number(event.target.value))}
-                      className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-gray-800"
+                      className="h-1.5 w-full cursor-pointer appearance-none rounded-full loud-card"
                     />
                     <span className="w-10">{Number.isFinite(duration) && duration > 0 ? formatTime(duration) : "--:--"}</span>
                   </div>
