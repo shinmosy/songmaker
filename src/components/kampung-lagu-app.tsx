@@ -218,20 +218,20 @@ export default function KampungLaguApp() {
         throw new Error(`HTTP ${response.status}`);
       }
     } catch (error) {
-        setTracks((prev) =>
-          prev.map((t) =>
-            t.id === newTrack.id
-              ? {
-                  ...t,
-                  status: "error",
-                  note: `Error: ${error instanceof Error ? error.message : "Unknown error"}`,
-                }
-              : t
-          )
-        );
-        setNotice(`Error generating audio: ${error instanceof Error ? error.message : "Unknown error"}`);
-      }
-    };
+      setTracks((prev) =>
+        prev.map((t) =>
+          t.id === newTrack.id
+            ? {
+                ...t,
+                status: "error",
+                note: `Error: ${error instanceof Error ? error.message : "Unknown error"}`,
+              }
+            : t
+        )
+      );
+      setNotice(`Error generating audio: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
+  };
 
   const deleteTrack = (id: string) => {
     setTracks((prev) => prev.filter((t) => t.id !== id));
