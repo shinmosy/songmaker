@@ -61,7 +61,7 @@ const defaultDraft: Draft = {
 const defaultSettings: Settings = {
   defaultModel: "MusicGen-Medium",
   endpointUrl: "",
-  useMockGeneration: true,
+  useMockGeneration: false,
 };
 
 export default function KampungLaguApp() {
@@ -195,7 +195,7 @@ export default function KampungLaguApp() {
     );
 
     // Call Vercel API route (yang nanti call Modal)
-    if (endpointReady && !isMockTrack) {
+    if (!isMockTrack) {
       try {
         const response = await fetch('/api/generate', {
           method: "POST",
