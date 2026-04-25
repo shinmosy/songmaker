@@ -13,11 +13,18 @@ export async function POST(request: NextRequest) {
     }
 
     const hfToken = process.env.HUGGINGFACE_API_KEY;
+    
+    // Fallback: jika HF key tidak ada, gunakan test audio
     if (!hfToken) {
-      return Response.json(
-        { success: false, error: 'HuggingFace API key not configured' },
-        { status: 500 }
-      );
+      console.warn('HuggingFace API key not configured, using test audio');
+      return Response.json({
+        success: true,
+        audio: null, // Frontend akan gunakan /test-audio.mp3
+        prompt: prompt,
+        duration: duration,
+        format: 'mp3',
+        note: 'Using test audio (configure HUGGINGFACE_API_KEY for real generation)',
+      });
     }
 
     // Call HuggingFace Inference API

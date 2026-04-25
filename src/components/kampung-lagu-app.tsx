@@ -191,26 +191,31 @@ export default function KampungLaguApp() {
 
       if (response.ok) {
         const result = await response.json();
-        if (result.success && result.audio) {
-            // Update track status to done
-            setTracks((prev) =>
-              prev.map((t) =>
-                t.id === newTrack.id
-                  ? {
-                      ...t,
-                      status: "done",
-                      note: `Audio generated successfully. Size: ${(result.audio.length / 1024).toFixed(2)} KB`,
-                    }
-                  : t
+        if (result.success) {
+          // Jika audio ada, simpan. Jika tidak, gunakan test audio
+          const audioUrl = result.audio 
+            ? `data:audio/wav;base64,${result.audio}`
+            : `/test-audio.mp3?t=${Date.now()}`;
+          
+          setTracks((prev) =>
+            prev.map((t) =>
+              t.id === newTrack.id
+                ? {
+                    ...t,
+                    status: "done",
+                    audioUrl: audioUrl,
+                    note: result.note || "Audio ready to play",
+                  }
+                : t
               )
             );
-            setNotice("Audio berhasil di-generate!");
-          } else {
-            throw new Error(result.error || "Generation failed");
-          }
+          setNotice("Audio ready! Klik play untuk dengarkan.");
         } else {
-          throw new Error(`HTTP ${response.status}`);
+          throw new Error(result.error || "Generation failed");
         }
+      } else {
+        throw new Error(`HTTP ${response.status}`);
+      }
       } catch (error) {
         setTracks((prev) =>
           prev.map((t) =>
