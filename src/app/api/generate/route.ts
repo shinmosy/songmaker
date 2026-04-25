@@ -12,22 +12,44 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Mock audio generation for MVP
-    // In production, replace with real API (Replicate, RunPod, etc)
-    
-    // Generate fake WAV file (silent audio)
-    const sampleRate = 16000;
-    const samples = sampleRate * duration;
-    const audioData = new Float32Array(samples);
-    
-    // Create WAV header
-    const wavHeader = createWavHeader(audioData.length, sampleRate);
-    const audioBuffer = Buffer.concat([
-      wavHeader,
-      Buffer.from(audioData.buffer),
-    ]);
-    
-    const audioBase64 = audioBuffer.toString('base64');
+    const hfToken = process.env.HUGGINGFACE_API_KEY;
+    if (!hfToken) {
+      return Response.json(
+        { success: false, error: 'HuggingFace API key not configured' },
+        { status: 500 }
+      );
+    }
+
+    // Call HuggingFace Inference API
+    const hfResponse = await fetch(
+      'https://api-inference.huggingface.co/models/facebook/musicgen-medium',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${hfToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          inputs: prompt,
+          parameters: {
+            max_length: Math.min(duration * 50, 1500), // HF uses tokens, ~50 tokens per second
+          },
+        }),
+      }
+    );
+
+    if (!hfResponse.ok) {
+      const error = await hfResponse.text();
+      console.error('HF API error:', error);
+      return Response.json(
+        { success: false, error: `HuggingFace API error: ${hfResponse.status}` },
+        { status: hfResponse.status }
+      );
+    }
+
+    // HF returns binary audio (WAV)
+    const audioBuffer = await hfResponse.arrayBuffer();
+    const audioBase64 = Buffer.from(audioBuffer).toString('base64');
 
     return Response.json({
       success: true,
@@ -35,7 +57,7 @@ export async function POST(request: NextRequest) {
       prompt: prompt,
       duration: duration,
       format: 'wav',
-      note: 'Mock generation - connect real API for actual audio',
+      note: 'Generated with HuggingFace MusicGen',
     });
   } catch (error) {
     console.error('Generate error:', error);
@@ -47,35 +69,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-function createWavHeader(samples: number, sampleRate: number): Buffer {
-  const channels = 1;
-  const bytesPerSample = 2;
-  const byteRate = sampleRate * channels * bytesPerSample;
-  const blockAlign = channels * bytesPerSample;
-  const dataSize = samples * bytesPerSample;
-
-  const header = Buffer.alloc(44);
-  
-  // RIFF header
-  header.write('RIFF', 0);
-  header.writeUInt32LE(36 + dataSize, 4);
-  header.write('WAVE', 8);
-  
-  // fmt subchunk
-  header.write('fmt ', 12);
-  header.writeUInt32LE(16, 16);
-  header.writeUInt16LE(1, 20); // PCM
-  header.writeUInt16LE(channels, 22);
-  header.writeUInt32LE(sampleRate, 24);
-  header.writeUInt32LE(byteRate, 28);
-  header.writeUInt16LE(blockAlign, 32);
-  header.writeUInt16LE(16, 34); // bits per sample
-  
-  // data subchunk
-  header.write('data', 36);
-  header.writeUInt32LE(dataSize, 40);
-  
-  return header;
 }

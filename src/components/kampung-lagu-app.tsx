@@ -37,8 +37,6 @@ interface Draft {
 
 interface Settings {
   defaultModel: string;
-  endpointUrl: string;
-  useMockGeneration: boolean;
 }
 
 const STORAGE_KEYS = {
@@ -61,8 +59,6 @@ const defaultDraft: Draft = {
 
 const defaultSettings: Settings = {
   defaultModel: "MusicGen-Medium",
-  endpointUrl: "",
-  useMockGeneration: true,
 };
 
 export default function KampungLaguApp() {
@@ -125,7 +121,6 @@ export default function KampungLaguApp() {
     });
   }, [search, tracks]);
 
-  const endpointReady = Boolean(settings.endpointUrl.trim());
   const totalTracks = tracks.length;
 
   const saveSettings = () => {
@@ -157,13 +152,12 @@ export default function KampungLaguApp() {
       return;
     }
 
-    if (!endpointReady && !settings.useMockGeneration) {
-      setNotice("Endpoint belum diisi dan mode mock sedang dimatikan. Isi endpoint dulu atau aktifkan mock generation.");
+    if (!draft.description.trim()) {
+      setNotice("Description harus diisi!");
       return;
     }
 
     const title = draft.title.trim() || `Untitled ${tracks.length + 1}`;
-    const isMockTrack = !endpointReady;
     const newTrack: Track = {
       id: `track-${Date.now()}`,
       title,
@@ -174,38 +168,30 @@ export default function KampungLaguApp() {
       type: draft.type,
       gender: draft.gender,
       tags: draft.tags,
-      status: isMockTrack ? "mock" : "generating",
+      status: "generating",
       createdAt: new Date().toISOString(),
-      note: isMockTrack
-        ? "Ini placeholder lokal. Sambungkan endpoint open-source agar bisa generate audio real."
-        : "Sedang generate audio...",
-      audioUrl: isMockTrack ? `/test-audio.mp3?t=${Date.now()}` : undefined,
+      note: "Sedang generate audio dengan HuggingFace MusicGen...",
     };
 
     setTracks((prev) => [newTrack, ...prev]);
     console.log("Track added:", newTrack);
     setView("library");
-    setNotice(
-      isMockTrack
-        ? "Track placeholder masuk library. Endpoint belum terhubung, jadi belum ada audio real."
-        : "Track masuk library. Sedang generate audio..."
-    );
+    setNotice("Track masuk library. Sedang generate audio...");
 
-    // Call Vercel API route (yang nanti call Modal)
-    if (!isMockTrack) {
-      try {
-        const response = await fetch('/api/generate', {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            prompt: draft.description.trim(),
-            duration: 10,
-          }),
-        });
+    // Call Vercel API route (call HuggingFace)
+    try {
+      const response = await fetch('/api/generate', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: draft.description.trim(),
+          duration: 10,
+        }),
+      });
 
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success && result.audio) {
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.audio) {
             // Update track status to done
             setTracks((prev) =>
               prev.map((t) =>
@@ -239,8 +225,7 @@ export default function KampungLaguApp() {
         );
         setNotice(`Error generating audio: ${error instanceof Error ? error.message : "Unknown error"}`);
       }
-    }
-  };
+    };
 
   const deleteTrack = (id: string) => {
     setTracks((prev) => prev.filter((t) => t.id !== id));
@@ -517,17 +502,15 @@ export default function KampungLaguApp() {
               </div>
 
               {/* Endpoint URL */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">GPU Endpoint URL</label>
-                <input
-                  type="text"
-                  value={settings.endpointUrl}
-                  onChange={(e) => setSettings((prev) => ({ ...prev, endpointUrl: e.target.value }))}
-                  placeholder="https://api.example.com/generate"
-                  className="w-full rounded border border-gray-600 bg-gray-900 px-3 py-2 text-white placeholder-gray-500 focus:border-gray-400 focus:outline-none"
-                />
+              <div className="rounded border border-gray-700 bg-gray-900 p-4">
+                <p className="text-sm text-gray-300 mb-2">
+                  <strong>🎵 Audio Generation</strong>
+                </p>
+                <p className="text-xs text-gray-400">
+                  Powered by <strong>HuggingFace MusicGen</strong>
+                </p>
                 <p className="text-xs text-gray-500 mt-2">
-                  Endpoint untuk inference open-source model (Modal, HF, RunPod, dll)
+                  Automatic audio generation. No setup needed!
                 </p>
               </div>
 
@@ -547,31 +530,14 @@ export default function KampungLaguApp() {
                 </select>
               </div>
 
-              {/* Mock Generation Toggle */}
-              <div>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={settings.useMockGeneration}
-                    onChange={(e) => setSettings((prev) => ({ ...prev, useMockGeneration: e.target.checked }))}
-                    className="rounded border-gray-600"
-                  />
-                  <span className="text-sm font-medium text-gray-300">Allow mock generation (placeholder)</span>
-                </label>
-                <p className="text-xs text-gray-500 mt-2">
-                  Jika dimatikan, harus ada endpoint URL untuk generate track.
-                </p>
-              </div>
-
               {/* Status */}
-              <div className="rounded border border-gray-700 bg-gray-900 p-4">
+              <div className="rounded border border-green-700 bg-gray-900 p-4">
                 <p className="text-sm text-gray-300">
-                  <strong>Endpoint Status:</strong>{" "}
-                  {endpointReady ? (
-                    <span className="text-green-400">Connected ✓</span>
-                  ) : (
-                    <span className="text-gray-400">Not connected</span>
-                  )}
+                  <strong>Status:</strong>{" "}
+                  <span className="text-green-400">Ready ✓</span>
+                </p>
+                <p className="text-xs text-gray-500 mt-2">
+                  Siap untuk generate musik. Tinggal isi deskripsi dan klik Generate!
                 </p>
                 <p className="text-sm text-gray-300 mt-2">
                   <strong>Total Tracks:</strong> {totalTracks}
