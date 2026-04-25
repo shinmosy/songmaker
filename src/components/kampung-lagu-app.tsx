@@ -26,7 +26,6 @@ type TrackType = "Instrumental" | "Vocal";
 type VocalGender = "Male" | "Female";
 type ApiProvider = "modal" | "sunoapi" | "kie";
 type RepeatMode = "off" | "all" | "one";
-type PlayerPanel = "queue" | "lyrics";
 
 interface Track {
   id: string;
@@ -122,11 +121,8 @@ export default function KampungLaguApp() {
   const [isPlayerPaused, setIsPlayerPaused] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [playerVolume, setPlayerVolume] = useState(0.85);
   const [shuffleEnabled, setShuffleEnabled] = useState(false);
   const [repeatMode, setRepeatMode] = useState<RepeatMode>("off");
-  const [playerPanel, setPlayerPanel] = useState<PlayerPanel>("queue");
-  const [isPlayerPanelOpen, setIsPlayerPanelOpen] = useState(true);
   const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstallSupported, setIsInstallSupported] = useState(false);
   const [serviceWorkerReady, setServiceWorkerReady] = useState(false);
@@ -233,7 +229,7 @@ export default function KampungLaguApp() {
     if (!nowPlaying || !audioRef.current) return;
 
     const player = audioRef.current;
-    player.volume = playerVolume;
+    player.volume = 0.85;
     player.load();
     setCurrentTime(0);
     setDuration(0);
@@ -241,12 +237,7 @@ export default function KampungLaguApp() {
     void player.play().catch(() => {
       setIsPlayerPaused(true);
     });
-  }, [nowPlaying, playerVolume]);
-
-  useEffect(() => {
-    if (!audioRef.current) return;
-    audioRef.current.volume = playerVolume;
-  }, [playerVolume]);
+  }, [nowPlaying]);
 
   const filteredTracks = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -293,14 +284,21 @@ export default function KampungLaguApp() {
   const errorTracks = tracks.filter((track) => track.status === "error").length;
 
   const syncNotice = useCallback((message: string) => {
+    console.log("syncNotice called with:", message);
     setNotice(message);
     if (noticeTimeoutRef.current) {
       window.clearTimeout(noticeTimeoutRef.current);
     }
     noticeTimeoutRef.current = window.setTimeout(() => {
+      console.log("Clearing notice");
       setNotice("");
-    }, 2800);
+    }, 3500);
   }, []);
+
+  // Debug: monitor notice state changes
+  useEffect(() => {
+    console.log("Notice state changed to:", notice);
+  }, [notice]);
 
   const updateDraft = <K extends keyof Draft>(key: K, value: Draft[K]) => {
     setDraft((prev) => ({ ...prev, [key]: value }));
@@ -388,11 +386,7 @@ export default function KampungLaguApp() {
       return;
     }
 
-    const shouldOpenPanel = typeof window !== "undefined" ? window.innerWidth >= 768 : true;
-
     setNowPlaying({ ...track, audioUrl: playableAudioUrl });
-    setPlayerPanel(track.lyrics.trim() ? "lyrics" : "queue");
-    setIsPlayerPanelOpen(shouldOpenPanel);
     syncNotice(`Sekarang memutar: ${track.title}`);
   }, [syncNotice]);
 
@@ -424,10 +418,6 @@ export default function KampungLaguApp() {
     setCurrentTime(value);
   };
 
-  const handleVolumeChange = (value: number) => {
-    setPlayerVolume(value);
-  };
-
   const getDownloadUrl = useCallback((track: Track | null) => {
     if (!track) return "";
     return getPlayableAudioUrl(track) || track.audioUrl || "";
@@ -438,7 +428,7 @@ export default function KampungLaguApp() {
     return `${safeTitle || "songmaker-track"}.mp3`;
   }, []);
 
-  const handleDownloadNotice = useCallback((track: Track | null) => {
+  const handleDownload = useCallback((track: Track | null) => {
     if (!track) {
       syncNotice("Audio track tidak tersedia untuk diunduh.");
       return;
@@ -450,8 +440,22 @@ export default function KampungLaguApp() {
       return;
     }
 
-    syncNotice(`Mengunduh: ${track.title}`);
-  }, [getDownloadUrl, syncNotice]);
+    syncNotice(`⬇ Mengunduh: ${track.title}`);
+    
+    // Use API route to proxy download (handles CORS + external URLs)
+    const fileName = getDownloadFileName(track);
+    const params = new URLSearchParams({
+      url: downloadUrl,
+      name: fileName
+    });
+    
+    const link = document.createElement("a");
+    link.href = `/api/download?${params.toString()}`;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }, [getDownloadUrl, getDownloadFileName, syncNotice]);
 
   const cycleRepeatMode = () => {
     setRepeatMode((prev) => {
@@ -816,7 +820,7 @@ export default function KampungLaguApp() {
         </div>
 
         {notice && (
-          <div className="mb-5 rounded-2xl border border-gray-800 bg-gray-950 px-4 py-3 text-sm text-gray-200">
+          <div role="alert" className="mb-5 rounded-2xl border border-gray-800 bg-gray-950 px-4 py-3 text-sm text-gray-200">
             {notice}
           </div>
         )}
@@ -1254,15 +1258,14 @@ export default function KampungLaguApp() {
                             {!playableAudioUrl ? "Belum siap" : nowPlaying?.id === track.id ? (isPlayerPaused ? "Resume" : "Pause") : "Play"}
                           </button>
                           {playableAudioUrl ? (
-                            <a
-                              href={getDownloadUrl(track)}
-                              download={getDownloadFileName(track)}
-                              onClick={() => handleDownloadNotice(track)}
+                            <button
+                              type="button"
+                              onClick={() => handleDownload(track)}
                               className="rounded-full border border-gray-700 px-4 py-2 text-sm text-gray-300 hover:border-gray-500"
                               title="Download track"
                             >
                               ⬇
-                            </a>
+                            </button>
                           ) : (
                             <button
                               type="button"
@@ -1528,6 +1531,25 @@ export default function KampungLaguApp() {
                     >
                       {repeatMode === "off" ? "Rpt Off" : repeatMode === "all" ? "Rpt All" : "Rpt 1"}
                     </button>
+                    {getDownloadUrl(nowPlaying) ? (
+                      <button
+                        type="button"
+                        onClick={() => handleDownload(nowPlaying)}
+                        className="rounded-full border border-gray-700 px-3 py-2 text-xs text-gray-300 transition hover:border-gray-500"
+                        title="Download track"
+                      >
+                        ⬇ Download
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled
+                        className="rounded-full border border-gray-800 px-3 py-2 text-xs text-gray-600 disabled:cursor-not-allowed"
+                        title="Download track"
+                      >
+                        ⬇ Download
+                      </button>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-3 text-xs text-gray-400">
@@ -1546,76 +1568,6 @@ export default function KampungLaguApp() {
                 </div>
 
                 <div className="space-y-3 rounded-3xl border border-gray-800 bg-black/60 p-4">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPlayerPanel("queue");
-                        setIsPlayerPanelOpen(true);
-                      }}
-                      className={`rounded-full px-3 py-2 text-xs ${
-                        playerPanel === "queue" ? "bg-white text-black" : "border border-gray-700 text-gray-300"
-                      }`}
-                    >
-                      Queue
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPlayerPanel("lyrics");
-                        setIsPlayerPanelOpen(true);
-                      }}
-                      className={`rounded-full px-3 py-2 text-xs ${
-                        playerPanel === "lyrics" ? "bg-white text-black" : "border border-gray-700 text-gray-300"
-                      }`}
-                    >
-                      Lyrics
-                    </button>
-                    {getDownloadUrl(nowPlaying) ? (
-                      <a
-                        href={getDownloadUrl(nowPlaying)}
-                        download={getDownloadFileName(nowPlaying)}
-                        onClick={() => handleDownloadNotice(nowPlaying)}
-                        className="rounded-full border border-gray-700 px-3 py-2 text-xs text-gray-300 transition hover:border-gray-500"
-                        title="Download track"
-                      >
-                        ⬇ Download
-                      </a>
-                    ) : (
-                      <button
-                        type="button"
-                        disabled
-                        className="rounded-full border border-gray-800 px-3 py-2 text-xs text-gray-600 disabled:cursor-not-allowed"
-                        title="Download track"
-                      >
-                        ⬇ Download
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      aria-label={isPlayerPanelOpen ? "Hide panel" : "Show panel"}
-                      title={isPlayerPanelOpen ? "Hide panel" : "Show panel"}
-                      onClick={() => setIsPlayerPanelOpen((prev) => !prev)}
-                      className="ml-auto rounded-full border border-gray-700 px-3 py-2 text-sm text-gray-300 transition hover:border-gray-500 hover:text-white"
-                    >
-                      {isPlayerPanelOpen ? "▾" : "▴"}
-                    </button>
-                  </div>
-                  <div>
-                    <div className="mb-2 flex items-center justify-between text-xs text-gray-500">
-                      <span>Volume</span>
-                      <span>{Math.round(playerVolume * 100)}%</span>
-                    </div>
-                    <input
-                      type="range"
-                      min={0}
-                      max={1}
-                      step={0.01}
-                      value={playerVolume}
-                      onChange={(event) => handleVolumeChange(Number(event.target.value))}
-                      className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-gray-800"
-                    />
-                  </div>
                   <p className="text-xs text-gray-500">
                     {nowPlayingLyrics.length > 0
                       ? `${nowPlayingLyrics.length} baris lirik siap dibaca.`
@@ -1623,91 +1575,6 @@ export default function KampungLaguApp() {
                   </p>
                 </div>
               </div>
-
-              {isPlayerPanelOpen && (
-                <div className="mt-4 grid gap-3 border-t border-gray-800 pt-4 lg:grid-cols-[320px_minmax(0,1fr)]">
-                  <div className="rounded-3xl border border-gray-800 bg-black/60 p-4">
-                    <div className="mb-3 flex items-center justify-between">
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Up Next</p>
-                        <h3 className="mt-1 text-sm font-semibold text-white">Queue</h3>
-                      </div>
-                      <span className="text-xs text-gray-500">{playableQueue.length} ready</span>
-                    </div>
-                    <div className="space-y-2">
-                      {playableQueue.length === 0 ? (
-                        <p className="text-sm text-gray-500">Belum ada track ready di library.</p>
-                      ) : (
-                        playableQueue.slice(0, 6).map((track) => {
-                          const queueThumb = getAlbumThumbnailMeta(track);
-                          const isActive = nowPlaying?.id === track.id;
-
-                          return (
-                            <button
-                              key={track.id}
-                              type="button"
-                              onClick={() => playTrack(track)}
-                              className={`flex w-full items-center gap-3 rounded-2xl border px-3 py-3 text-left transition ${
-                                isActive ? "border-white bg-white/10" : "border-gray-800 hover:border-gray-600"
-                              }`}
-                            >
-                              <div className={`relative flex h-12 w-12 shrink-0 items-end overflow-hidden rounded-2xl bg-gradient-to-br ${queueThumb.accentClassName} p-2`}>
-                                <img src={queueThumb.artworkDataUrl} alt={`Thumbnail ${track.title}`} className="absolute inset-0 h-full w-full object-cover opacity-90" />
-                                <div className="absolute inset-0 bg-black/10" />
-                                <span className="relative z-10 text-xs font-semibold tracking-[0.16em] text-black/80">{queueThumb.initials}</span>
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm font-medium text-white">{track.title}</p>
-                                <p className="truncate text-xs text-gray-500">{track.type} • {track.model}</p>
-                              </div>
-                              {isActive && <span className="text-[11px] text-gray-300">Live</span>}
-                            </button>
-                          );
-                        })
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="rounded-3xl border border-gray-800 bg-black/60 p-4">
-                    <div className="mb-3 flex items-center justify-between">
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
-                          {playerPanel === "lyrics" ? "Lyrics View" : "Player Notes"}
-                        </p>
-                        <h3 className="mt-1 text-sm font-semibold text-white">
-                          {playerPanel === "lyrics" ? "Lyrics Panel" : "Queue Preview"}
-                        </h3>
-                      </div>
-                      <span className="text-xs text-gray-500">{nowPlaying.type}</span>
-                    </div>
-
-                    {playerPanel === "lyrics" ? (
-                      nowPlayingLyrics.length > 0 ? (
-                        <div className="max-h-52 space-y-2 overflow-y-auto pr-1 text-sm leading-7 text-gray-200">
-                          {nowPlayingLyrics.map((line, index) => (
-                            <p key={`${nowPlaying.id}-line-${index}`} className="rounded-2xl border border-gray-800 bg-gray-950/80 px-3 py-2">
-                              {line}
-                            </p>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="rounded-2xl border border-dashed border-gray-800 bg-gray-950/70 px-4 py-6 text-sm text-gray-500">
-                          Belum ada lirik di track ini. Kalau mau panel ini hidup, isi lirik pas generate lagu vocal.
-                        </div>
-                      )
-                    ) : (
-                      <div className="space-y-3 text-sm text-gray-400">
-                        <p className="rounded-2xl border border-gray-800 bg-gray-950/80 px-4 py-3">
-                          Player sekarang udah model Spotify mini: thumbnail, seekbar, shuffle, repeat, queue, lyrics, dan volume.
-                        </p>
-                        <p className="rounded-2xl border border-gray-800 bg-gray-950/80 px-4 py-3">
-                          Tips: pakai tab <span className="text-white">Lyrics</span> buat lagu vocal, dan tab <span className="text-white">Queue</span> buat loncat cepat antar track.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
 
               <audio ref={audioRef} preload="metadata" className="hidden" src={nowPlaying.audioUrl || ""} />
             </div>
