@@ -217,7 +217,7 @@ export default function KampungLaguApp() {
       } else {
         throw new Error(`HTTP ${response.status}`);
       }
-      } catch (error) {
+    } catch (error) {
         setTracks((prev) =>
           prev.map((t) =>
             t.id === newTrack.id
