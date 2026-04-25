@@ -194,10 +194,10 @@ export default function KampungLaguApp() {
         : "Track masuk library. Sedang generate audio..."
     );
 
-    // Call Modal endpoint jika ada
+    // Call Vercel API route (yang nanti call Modal)
     if (endpointReady && !isMockTrack) {
       try {
-        const response = await fetch(settings.endpointUrl, {
+        const response = await fetch('/api/generate', {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

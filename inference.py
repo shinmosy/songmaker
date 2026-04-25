@@ -5,7 +5,7 @@ import base64
 
 app = modal.App("songmaker-inference")
 
-# Minimal setup
+# Setup image
 image = (
     modal.Image.debian_slim()
     .pip_install("torch", "torchaudio", "transformers", "scipy")
@@ -13,12 +13,15 @@ image = (
 
 @app.function(image=image, gpu="T4", timeout=600)
 def generate_music(prompt: str, duration: int = 10) -> dict:
-    """Generate music using Hugging Face model"""
+    """Generate music from text prompt"""
+    if not prompt:
+        return {"success": False, "error": "Prompt is required"}
+    
     try:
         from transformers import pipeline
         import torch
         
-        # Use a simpler text-to-audio model
+        # Use text-to-audio model
         pipe = pipeline("text-to-audio", model="facebook/musicgen-small", device=0)
         
         # Generate
@@ -52,8 +55,9 @@ def generate_music(prompt: str, duration: int = 10) -> dict:
             "error": str(e)
         }
 
-@app.local_entrypoint()
-def test():
-    """Test function"""
-    result = generate_music.remote("upbeat electronic dance music", duration=5)
-    print(json.dumps({k: v if k != "audio" else f"{v[:50]}..." for k, v in result.items()}, indent=2))
+@app.function(image=image, gpu="T4", timeout=600)
+def generate_music_http(request: dict) -> dict:
+    """HTTP endpoint wrapper"""
+    prompt = request.get("prompt", "")
+    duration = request.get("duration", 10)
+    return generate_music(prompt, duration)
