@@ -486,7 +486,11 @@ export default function KampungLaguApp() {
                           </div>
                           <p className="text-xs text-gray-500 mt-2">{track.note}</p>
                           {/* Audio Player */}
-                          {track.status !== "mock" && (
+                          {track.status === "mock" ? (
+                            <div className="mt-3 p-3 bg-gray-800 rounded text-xs text-gray-400 text-center">
+                              🎵 Placeholder (endpoint belum terhubung)
+                            </div>
+                          ) : (
                             <div className="mt-3">
                               <audio
                                 controls
