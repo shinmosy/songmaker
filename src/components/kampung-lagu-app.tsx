@@ -108,7 +108,7 @@ const defaultSettings: Settings = {
 };
 
 const fieldClassName =
-  "w-full rounded-xl border border-[#2d3561] bg-[#1a1f3a] px-3 py-3 text-white placeholder-neutral-400 focus:border-[#00d9ff] focus:outline-none";
+  "w-full rounded-none border-4 border-white bg-black px-3 py-3 text-white placeholder-neutral-400 focus:border-[#00d9ff] focus:outline-none";
 
 export default function KampungLaguApp() {
   const [view, setView] = useState<View>("create");
@@ -788,30 +788,30 @@ export default function KampungLaguApp() {
   };
 
   return (
-    <div className="songmaker-elegant min-h-screen bg-[#0a0e27] text-white">
-      <header className="sticky top-0 z-40 border-b border-[#2d3561] bg-[#0a0e27]/80 backdrop-blur-md">
+    <div className="min-h-screen bg-black text-white">
+      <header className="sticky top-0 z-40 border-b-4 border-white bg-black">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4">
           <div>
-            <h1 className="text-2xl font-bold">SongMaker</h1>
-            <p className="text-xs text-[#a0aec0]">Studio musik AI hitam-putih yang simple tapi rapih.</p>
+            <h1 className="text-4xl font-black uppercase">SongMaker</h1>
+            <p className="text-xs text-white">Studio musik AI hitam-putih yang simple tapi rapih.</p>
           </div>
-          <div className="hidden rounded-full border border-[#2d3561] px-3 py-1 text-xs text-[#a0aec0] sm:block">
+          <div className="hidden border-4 border-white px-3 py-1 text-xs text-white sm:block">
             {readyTracks}/{totalTracks} track ready
           </div>
         </div>
       </header>
 
       <main className="mx-auto max-w-6xl px-4 pb-56 pt-6 md:pb-40">
-        <div className="mb-6 flex flex-wrap gap-2 border-b border-[#2d3561] pb-3">
+        <div className="mb-6 flex flex-wrap gap-2 border-b-4 border-white pb-3">
           {(["create", "library", "settings"] as const).map((tab) => (
             <button
               key={tab}
               type="button"
               onClick={() => setView(tab)}
-              className={`px-4 py-2 text-sm font-medium transition ${
+              className={`loud-button ${
                 view === tab
-                  ? "bg-gradient-to-r from-[#00d9ff] to-[#8338ec] text-[#0a0e27] rounded-full shadow-lg shadow-[#00d9ff]/50"
-                  : "border border-[#2d3561] text-[#a0aec0] hover:border-[#00d9ff] rounded-full"
+                  ? "bg-gradient-to-r from-[#00d9ff] to-[#8338ec] text-[#0a0e27] rounded-none shadow-lg shadow-[#00d9ff]/50"
+                  : "border-4 border-white text-white hover:border-[#00d9ff] rounded-none"
               }`}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -820,25 +820,25 @@ export default function KampungLaguApp() {
         </div>
 
         {notice && (
-          <div role="alert" className="mb-5 rounded-2xl border border-[#2d3561] bg-[#1a1f3a] px-4 py-3 text-sm text-white">
+          <div role="alert" className="mb-5 rounded-2xl border-4 border-white bg-black px-4 py-3 text-sm text-white">
             {notice}
           </div>
         )}
 
         {view === "create" && (
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-            <section className="space-y-5 rounded-3xl border border-[#2d3561] bg-white p-5">
+            <section className="space-y-5 rounded-3xl border-4 border-white bg-black p-5">
               <div>
                 <h2 className="text-xl font-semibold">Create</h2>
-                <p className="mt-1 text-sm text-[#a0aec0]">
+                <p className="mt-1 text-sm text-white">
                   Buat musik & suara AI — pilih mode, rapihin prompt, lalu generate.
                 </p>
               </div>
 
               <div>
                 <div className="mb-2 flex items-center justify-between gap-3">
-                  <label className="text-sm font-medium text-[#a0aec0]">Mode</label>
-                  <span className="text-xs text-[#a0aec0]">{draft.mode} mode</span>
+                  <label className="text-sm font-medium text-white">Mode</label>
+                  <span className="text-xs text-white">{draft.mode} mode</span>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   {(["Simple", "Advanced", "Sounds"] as const).map((mode) => (
@@ -846,10 +846,10 @@ export default function KampungLaguApp() {
                       key={mode}
                       type="button"
                       onClick={() => updateDraft("mode", mode)}
-                      className={`rounded-xl border px-3 py-2 text-sm transition ${
+                      className={`rounded-none border px-3 py-2 text-sm transition ${
                         draft.mode === mode
-                          ? "border-[#00d9ff] bg-[#1a1f3a] text-white"
-                          : "border-[#2d3561] text-[#a0aec0] hover:border-[#00d9ff]"
+                          ? "border-[#00d9ff] bg-black text-white"
+                          : "border-white text-white hover:border-[#00d9ff]"
                       }`}
                     >
                       {mode}
@@ -861,8 +861,8 @@ export default function KampungLaguApp() {
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <div className="mb-2 flex items-center justify-between gap-3">
-                    <label className="text-sm font-medium text-[#a0aec0]">Title</label>
-                    <span className="text-xs text-[#a0aec0]">{draft.title.length}/{TITLE_LIMIT}</span>
+                    <label className="text-sm font-medium text-white">Title</label>
+                    <span className="text-xs text-white">{draft.title.length}/{TITLE_LIMIT}</span>
                   </div>
                   <input
                     type="text"
@@ -876,8 +876,8 @@ export default function KampungLaguApp() {
 
                 <div>
                   <div className="mb-2 flex items-center justify-between gap-3">
-                    <label className="text-sm font-medium text-[#a0aec0]">Model version</label>
-                    <span className="text-xs text-[#a0aec0]">Suno-style selector, backend masih pakai engine internal</span>
+                    <label className="text-sm font-medium text-white">Model version</label>
+                    <span className="text-xs text-white">Suno-style selector, backend masih pakai engine internal</span>
                   </div>
                   <select
                     value={draft.model}
@@ -895,17 +895,17 @@ export default function KampungLaguApp() {
 
               <div className="grid gap-4 md:grid-cols-3">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-[#a0aec0]">Type</label>
+                  <label className="mb-2 block text-sm font-medium text-white">Type</label>
                   <div className="grid grid-cols-2 gap-2">
                     {(["Instrumental", "Vocal"] as const).map((type) => (
                       <button
                         key={type}
                         type="button"
                         onClick={() => updateDraft("type", type)}
-                        className={`rounded-xl border px-3 py-2 text-sm transition ${
+                        className={`rounded-none border px-3 py-2 text-sm transition ${
                           draft.type === type
-                            ? "border-[#00d9ff] bg-[#1a1f3a] text-white"
-                            : "border-[#2d3561] text-[#a0aec0] hover:border-[#00d9ff]"
+                            ? "border-[#00d9ff] bg-black text-white"
+                            : "border-white text-white hover:border-[#00d9ff]"
                         }`}
                       >
                         {type}
@@ -915,7 +915,7 @@ export default function KampungLaguApp() {
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-[#a0aec0]">Vocal gender</label>
+                  <label className="mb-2 block text-sm font-medium text-white">Vocal gender</label>
                   <div className="grid grid-cols-2 gap-2">
                     {(["Male", "Female"] as const).map((gender) => (
                       <button
@@ -923,10 +923,10 @@ export default function KampungLaguApp() {
                         type="button"
                         disabled={draft.type !== "Vocal"}
                         onClick={() => updateDraft("gender", gender)}
-                        className={`rounded-xl border px-3 py-2 text-sm transition ${
+                        className={`rounded-none border px-3 py-2 text-sm transition ${
                           draft.gender === gender && draft.type === "Vocal"
-                            ? "border-[#00d9ff] bg-[#1a1f3a] text-white"
-                            : "border-[#2d3561] text-[#a0aec0] hover:border-[#00d9ff] disabled:cursor-not-allowed disabled:opacity-40"
+                            ? "border-[#00d9ff] bg-black text-white"
+                            : "border-white text-white hover:border-[#00d9ff] disabled:cursor-not-allowed disabled:opacity-40"
                         }`}
                       >
                         {gender}
@@ -935,7 +935,7 @@ export default function KampungLaguApp() {
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-[#2d3561] bg-[#1a1f3a] p-4 text-sm text-[#a0aec0]">
+                <div className="rounded-2xl border-4 border-white bg-black p-4 text-sm text-white">
                   <p className="font-medium text-white">Quick info</p>
                   <p className="mt-2">Mode: {draft.mode}</p>
                   <p>Output: {draft.type}</p>
@@ -945,21 +945,21 @@ export default function KampungLaguApp() {
 
               <div>
                 <div className="mb-2 flex items-center justify-between gap-3">
-                  <label className="text-sm font-medium text-[#a0aec0]">Deskripsi utama</label>
-                  <span className="text-xs text-[#a0aec0]">{draft.description.length}/{DESCRIPTION_LIMIT}</span>
+                  <label className="text-sm font-medium text-white">Deskripsi utama</label>
+                  <span className="text-xs text-white">{draft.description.length}/{DESCRIPTION_LIMIT}</span>
                 </div>
                 <div className="mb-2 flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={() => copyText(draft.description, "Deskripsi masih kosong.", "Deskripsi berhasil di-copy.")}
-                    className="rounded-full border border-[#2d3561] px-3 py-1 text-xs text-[#a0aec0] hover:border-[#00d9ff]"
+                    className="rounded-none border-4 border-white px-3 py-1 text-xs text-white hover:border-[#00d9ff]"
                   >
                     Copy
                   </button>
                   <button
                     type="button"
                     onClick={handleBoostDescription}
-                    className="rounded-full border border-[#2d3561] px-3 py-1 text-xs text-[#a0aec0] hover:border-[#00d9ff]"
+                    className="rounded-none border-4 border-white px-3 py-1 text-xs text-white hover:border-[#00d9ff]"
                   >
                     Boost Style
                   </button>
@@ -969,7 +969,7 @@ export default function KampungLaguApp() {
                       updateDraft("description", "");
                       syncNotice("Deskripsi dihapus.");
                     }}
-                    className="rounded-full border border-[#2d3561] px-3 py-1 text-xs text-[#a0aec0] hover:border-red-400 hover:text-red-500"
+                    className="rounded-none border-4 border-white px-3 py-1 text-xs text-white hover:border-red-400 hover:text-red-500"
                   >
                     Delete
                   </button>
@@ -985,17 +985,17 @@ export default function KampungLaguApp() {
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-[#a0aec0]">Tags</label>
+                <label className="mb-2 block text-sm font-medium text-white">Tags</label>
                 <div className="flex flex-wrap gap-2">
                   {TAG_OPTIONS.map((tag) => (
                     <button
                       key={tag}
                       type="button"
                       onClick={() => toggleTag(tag)}
-                      className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
+                      className={`rounded-none border px-3 py-1 text-xs font-medium transition ${
                         draft.tags.includes(tag)
-                          ? "border-[#00d9ff] bg-[#1a1f3a] text-white"
-                          : "border-[#2d3561] text-[#a0aec0] hover:border-[#00d9ff]"
+                          ? "border-[#00d9ff] bg-black text-white"
+                          : "border-white text-white hover:border-[#00d9ff]"
                       }`}
                     >
                       {tag}
@@ -1006,14 +1006,14 @@ export default function KampungLaguApp() {
 
               <div>
                 <div className="mb-2 flex items-center justify-between gap-3">
-                  <label className="text-sm font-medium text-[#a0aec0]">Lyrics</label>
-                  <span className="text-xs text-[#a0aec0]">{draft.lyrics.length}/{LYRICS_LIMIT}</span>
+                  <label className="text-sm font-medium text-white">Lyrics</label>
+                  <span className="text-xs text-white">{draft.lyrics.length}/{LYRICS_LIMIT}</span>
                 </div>
                 <div className="mb-2 flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={() => copyText(draft.lyrics, "Lyrics masih kosong.", "Lyrics berhasil di-copy.")}
-                    className="rounded-full border border-[#2d3561] px-3 py-1 text-xs text-[#a0aec0] hover:border-[#00d9ff]"
+                    className="rounded-none border-4 border-white px-3 py-1 text-xs text-white hover:border-[#00d9ff]"
                   >
                     Copy
                   </button>
@@ -1023,7 +1023,7 @@ export default function KampungLaguApp() {
                       updateDraft("lyrics", "");
                       syncNotice("Lyrics dihapus.");
                     }}
-                    className="rounded-full border border-[#2d3561] px-3 py-1 text-xs text-[#a0aec0] hover:border-red-400 hover:text-red-500"
+                    className="rounded-none border-4 border-white px-3 py-1 text-xs text-white hover:border-red-400 hover:text-red-500"
                   >
                     Delete
                   </button>
@@ -1043,11 +1043,11 @@ export default function KampungLaguApp() {
                   type="button"
                   onClick={generateTrack}
                   disabled={isGenerating}
-                  className="relative flex-1 rounded-2xl bg-white px-4 py-3 font-medium text-white transition hover:bg-[#252d48] disabled:cursor-not-allowed disabled:bg-neutral-400"
+                  className="relative flex-1 rounded-2xl bg-black px-4 py-3 font-medium text-white transition hover:bg-[#252d48] disabled:cursor-not-allowed disabled:bg-neutral-400"
                 >
                   {isGenerating ? (
                     <div className="flex items-center justify-center gap-2">
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#00d9ff] border-t-transparent" />
+                      <div className="h-4 w-4 animate-spin rounded-none border-2 border-[#00d9ff] border-t-transparent" />
                       <span>{generateProgress}%</span>
                     </div>
                   ) : (
@@ -1061,7 +1061,7 @@ export default function KampungLaguApp() {
                   type="button"
                   onClick={clearDraft}
                   disabled={isGenerating}
-                  className="flex-1 rounded-2xl border border-[#2d3561] px-4 py-3 font-medium text-[#a0aec0] transition hover:border-[#00d9ff] disabled:cursor-not-allowed disabled:border-[#2d3561] disabled:text-gray-600"
+                  className="flex-1 rounded-2xl border-4 border-white px-4 py-3 font-medium text-white transition hover:border-[#00d9ff] disabled:cursor-not-allowed disabled:border-white disabled:text-gray-600"
                 >
                   Clear
                 </button>
@@ -1069,19 +1069,19 @@ export default function KampungLaguApp() {
             </section>
 
             <aside className="space-y-4">
-              <section className="rounded-3xl border border-[#2d3561] bg-white p-5">
+              <section className="loud-card">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-[#a0aec0]">Riwayat</p>
+                    <p className="text-xs uppercase tracking-[0.2em] text-white">Riwayat</p>
                     <h3 className="text-lg font-semibold">Recent Generations</h3>
                   </div>
-                  <span className="rounded-full border border-[#2d3561] px-3 py-1 text-xs text-[#a0aec0]">
+                  <span className="rounded-none border-4 border-white px-3 py-1 text-xs text-white">
                     {recentTracks.length}
                   </span>
                 </div>
 
                 {recentTracks.length === 0 ? (
-                  <p className="mt-4 text-sm text-[#a0aec0]">Belum ada lagu. Generate dulu biar riwayat kebaca di sini.</p>
+                  <p className="mt-4 text-sm text-white">Belum ada lagu. Generate dulu biar riwayat kebaca di sini.</p>
                 ) : (
                   <div className="mt-4 space-y-3">
                     {recentTracks.map((track) => {
@@ -1095,16 +1095,16 @@ export default function KampungLaguApp() {
                             setView("library");
                             playTrack(track);
                           }}
-                          className="w-full rounded-2xl border border-[#2d3561] bg-[#1a1f3a] p-3 text-left transition hover:border-gray-600"
+                          className="w-full rounded-2xl border-4 border-white bg-black p-3 text-left transition hover:border-gray-600"
                         >
                           <div className="flex items-center justify-between gap-3">
                             <p className="truncate font-medium text-white">{track.title}</p>
-                            <span className={`rounded-full border px-2 py-1 text-[11px] ${status.tone}`}>
+                            <span className={`rounded-none border px-2 py-1 text-[11px] ${status.tone}`}>
                               {status.label}
                             </span>
                           </div>
-                          <p className="mt-2 line-clamp-2 text-xs text-[#a0aec0]">{track.description}</p>
-                          <p className="mt-2 text-[11px] text-[#a0aec0]">
+                          <p className="mt-2 line-clamp-2 text-xs text-white">{track.description}</p>
+                          <p className="mt-2 text-[11px] text-white">
                             {new Date(track.createdAt).toLocaleString("id-ID")}
                           </p>
                         </button>
@@ -1114,20 +1114,20 @@ export default function KampungLaguApp() {
                 )}
               </section>
 
-              <section className="rounded-3xl border border-[#2d3561] bg-white p-5 text-sm text-[#a0aec0]">
+              <section className="rounded-3xl border-4 border-white bg-black p-5 text-sm text-white">
                 <h3 className="font-semibold text-white">Quick stats</h3>
                 <div className="mt-4 grid grid-cols-3 gap-3 text-center">
-                  <div className="rounded-2xl border border-[#2d3561] bg-[#1a1f3a] px-3 py-4">
+                  <div className="rounded-2xl border-4 border-white bg-black px-3 py-4">
                     <p className="text-lg font-semibold text-white">{readyTracks}</p>
-                    <p className="text-[11px] uppercase tracking-wide text-[#a0aec0]">Ready</p>
+                    <p className="text-[11px] uppercase tracking-wide text-white">Ready</p>
                   </div>
-                  <div className="rounded-2xl border border-[#2d3561] bg-[#1a1f3a] px-3 py-4">
+                  <div className="rounded-2xl border-4 border-white bg-black px-3 py-4">
                     <p className="text-lg font-semibold text-white">{activeGenerations}</p>
-                    <p className="text-[11px] uppercase tracking-wide text-[#a0aec0]">Active</p>
+                    <p className="text-[11px] uppercase tracking-wide text-white">Active</p>
                   </div>
-                  <div className="rounded-2xl border border-[#2d3561] bg-[#1a1f3a] px-3 py-4">
+                  <div className="rounded-2xl border-4 border-white bg-black px-3 py-4">
                     <p className="text-lg font-semibold text-white">{errorTracks}</p>
-                    <p className="text-[11px] uppercase tracking-wide text-[#a0aec0]">Error</p>
+                    <p className="text-[11px] uppercase tracking-wide text-white">Error</p>
                   </div>
                 </div>
               </section>
@@ -1136,25 +1136,25 @@ export default function KampungLaguApp() {
         )}
 
         {view === "library" && (
-          <section className="rounded-3xl border border-[#2d3561] bg-white p-5">
-            <div className="flex flex-col gap-4 border-b border-[#2d3561] pb-5 lg:flex-row lg:items-end lg:justify-between">
+          <section className="loud-card">
+            <div className="flex flex-col gap-4 border-b border-white pb-5 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[#a0aec0]">Koleksi</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-white">Koleksi</p>
                 <h2 className="text-xl font-semibold">Library</h2>
-                <p className="mt-1 text-sm text-[#a0aec0]">Semua track yang sudah tersimpan di browser.</p>
+                <p className="mt-1 text-sm text-white">Semua track yang sudah tersimpan di browser.</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={refreshLibrary}
-                  className="rounded-full border border-[#2d3561] px-4 py-2 text-sm text-[#a0aec0] hover:border-[#00d9ff]"
+                  className="rounded-none border-4 border-white px-4 py-2 text-sm text-white hover:border-[#00d9ff]"
                 >
                   Refresh
                 </button>
                 <button
                   type="button"
                   onClick={clearAllTracks}
-                  className="rounded-full border border-[#2d3561] px-4 py-2 text-sm text-[#a0aec0] hover:border-red-400 hover:text-red-500"
+                  className="rounded-none border-4 border-white px-4 py-2 text-sm text-white hover:border-red-400 hover:text-red-500"
                 >
                   Clear all
                 </button>
@@ -1171,16 +1171,16 @@ export default function KampungLaguApp() {
                   className={fieldClassName}
                 />
               </div>
-              <div className="rounded-2xl border border-[#2d3561] bg-[#1a1f3a] px-4 py-3 text-sm text-[#a0aec0]">
+              <div className="rounded-2xl border-4 border-white bg-black px-4 py-3 text-sm text-white">
                 <p>
                   <strong className="text-white">{filteredTracks.length}</strong> track tampil
                 </p>
-                <p className="mt-1 text-xs text-[#a0aec0]">Dari total {totalTracks} track tersimpan.</p>
+                <p className="mt-1 text-xs text-white">Dari total {totalTracks} track tersimpan.</p>
               </div>
             </div>
 
             {filteredTracks.length === 0 ? (
-              <p className="py-12 text-center text-sm text-[#a0aec0]">Belum ada track yang cocok. Coba generate dulu atau ubah kata kunci pencarian.</p>
+              <p className="py-12 text-center text-sm text-white">Belum ada track yang cocok. Coba generate dulu atau ubah kata kunci pencarian.</p>
             ) : (
               <div className="mt-5 space-y-4">
                 {filteredTracks.map((track) => {
@@ -1194,7 +1194,7 @@ export default function KampungLaguApp() {
                       className={`rounded-3xl border p-4 transition ${
                         nowPlaying?.id === track.id
                           ? "border-white bg-gray-900"
-                          : "border-[#2d3561] bg-[#1a1f3a] hover:border-gray-600"
+                          : "border-white bg-black hover:border-gray-600"
                       }`}
                     >
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -1203,39 +1203,39 @@ export default function KampungLaguApp() {
                             className={`relative flex h-16 w-16 shrink-0 items-end justify-start overflow-hidden rounded-2xl bg-gradient-to-br ${trackThumbnail.accentClassName} p-3 text-left shadow-[0_18px_40px_rgba(0,0,0,0.35)]`}
                           >
                             <img src={trackThumbnail.artworkDataUrl} alt={`Thumbnail ${track.title}`} className="absolute inset-0 h-full w-full object-cover opacity-90" />
-                            <div className="absolute inset-0 bg-[#1a1f3a]/10" />
+                            <div className="absolute inset-0 bg-black/10" />
                             <span className="relative z-10 text-lg font-semibold tracking-[0.18em] text-white/80">{trackThumbnail.initials}</span>
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-2">
                               <h3 className="truncate text-lg font-semibold text-white">{track.title}</h3>
-                              <span className={`rounded-full border px-2 py-1 text-[11px] ${status.tone}`}>
+                              <span className={`rounded-none border px-2 py-1 text-[11px] ${status.tone}`}>
                                 {status.label}
                               </span>
-                              <span className="rounded-full border border-[#2d3561] px-2 py-1 text-[11px] text-[#a0aec0]">
+                              <span className="rounded-none border-4 border-white px-2 py-1 text-[11px] text-white">
                                 {track.model}
                               </span>
-                              <span className="rounded-full border border-[#2d3561] px-2 py-1 text-[11px] text-[#a0aec0]">
+                              <span className="rounded-none border-4 border-white px-2 py-1 text-[11px] text-white">
                                 {track.mode}
                               </span>
                             </div>
-                            <p className="mt-2 text-sm text-[#a0aec0]">{track.description}</p>
+                            <p className="mt-2 text-sm text-white">{track.description}</p>
                             <div className="mt-3 flex flex-wrap gap-2">
-                              <span className="rounded-full border border-[#2d3561] px-2 py-1 text-[11px] text-[#a0aec0]">
+                              <span className="rounded-none border-4 border-white px-2 py-1 text-[11px] text-white">
                                 {track.type}
                               </span>
                               {track.type === "Vocal" && (
-                                <span className="rounded-full border border-[#2d3561] px-2 py-1 text-[11px] text-[#a0aec0]">
+                                <span className="rounded-none border-4 border-white px-2 py-1 text-[11px] text-white">
                                   {track.gender}
                                 </span>
                               )}
                               {track.tags.map((tag) => (
-                                <span key={tag} className="rounded-full border border-[#2d3561] px-2 py-1 text-[11px] text-[#a0aec0]">
+                                <span key={tag} className="rounded-none border-4 border-white px-2 py-1 text-[11px] text-white">
                                   {tag}
                                 </span>
                               ))}
                             </div>
-                            <p className="mt-3 text-xs text-[#a0aec0]">{track.note}</p>
+                            <p className="mt-3 text-xs text-white">{track.note}</p>
                             <p className="mt-1 text-[11px] text-gray-600">
                               {new Date(track.createdAt).toLocaleString("id-ID")}
                             </p>
@@ -1253,7 +1253,7 @@ export default function KampungLaguApp() {
                               playTrack(track);
                             }}
                             disabled={!playableAudioUrl}
-                            className="rounded-full bg-white px-4 py-2 text-sm font-medium text-white hover:bg-[#252d48] disabled:cursor-not-allowed disabled:loud-card disabled:text-[#a0aec0]"
+                            className="rounded-none bg-black px-4 py-2 text-sm font-medium text-white hover:bg-[#252d48] disabled:cursor-not-allowed disabled:loud-card disabled:text-white"
                           >
                             {!playableAudioUrl ? "Belum siap" : nowPlaying?.id === track.id ? (isPlayerPaused ? "Resume" : "Pause") : "Play"}
                           </button>
@@ -1261,7 +1261,7 @@ export default function KampungLaguApp() {
                             <button
                               type="button"
                               onClick={() => handleDownload(track)}
-                              className="rounded-full border border-[#2d3561] px-4 py-2 text-sm text-[#a0aec0] hover:border-[#00d9ff]"
+                              className="rounded-none border-4 border-white px-4 py-2 text-sm text-white hover:border-[#00d9ff]"
                               title="Download track"
                             >
                               ⬇
@@ -1270,7 +1270,7 @@ export default function KampungLaguApp() {
                             <button
                               type="button"
                               disabled
-                              className="rounded-full border border-[#2d3561] px-4 py-2 text-sm text-gray-600 disabled:cursor-not-allowed"
+                              className="rounded-none border-4 border-white px-4 py-2 text-sm text-gray-600 disabled:cursor-not-allowed"
                               title="Download track"
                             >
                               ⬇
@@ -1279,7 +1279,7 @@ export default function KampungLaguApp() {
                           <button
                             type="button"
                             onClick={() => deleteTrack(track.id)}
-                            className="rounded-full border border-[#2d3561] px-4 py-2 text-sm text-[#a0aec0] hover:border-red-400 hover:text-red-500"
+                            className="rounded-none border-4 border-white px-4 py-2 text-sm text-white hover:border-red-400 hover:text-red-500"
                           >
                             Delete
                           </button>
@@ -1294,41 +1294,41 @@ export default function KampungLaguApp() {
         )}
 
         {view === "settings" && (
-          <section className="space-y-5 rounded-3xl border border-[#2d3561] bg-white p-5">
+          <section className="space-y-5 rounded-3xl border-4 border-white bg-black p-5">
             <div>
               <h2 className="text-xl font-semibold">Settings</h2>
-              <p className="mt-1 text-sm text-[#a0aec0]">Status backend, model default, dan opsi install app.</p>
+              <p className="mt-1 text-sm text-white">Status backend, model default, dan opsi install app.</p>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              <div className="rounded-2xl border border-[#2d3561] bg-[#1a1f3a] p-4 text-sm text-[#a0aec0]">
-                <p className="text-xs uppercase tracking-[0.2em] text-[#a0aec0]">Backend aktif</p>
+              <div className="rounded-2xl border-4 border-white bg-black p-4 text-sm text-white">
+                <p className="text-xs uppercase tracking-[0.2em] text-white">Backend aktif</p>
                 <p className="mt-3 font-semibold text-white">{activeProviderConfig.label}</p>
-                <p className="mt-2 text-xs text-[#a0aec0]">Kalau provider butuh key tapi kosong, generate auto fallback ke Modal MusicGen.</p>
+                <p className="mt-2 text-xs text-white">Kalau provider butuh key tapi kosong, generate auto fallback ke Modal MusicGen.</p>
               </div>
-              <div className="rounded-2xl border border-[#2d3561] bg-[#1a1f3a] p-4 text-sm text-[#a0aec0]">
-                <p className="text-xs uppercase tracking-[0.2em] text-[#a0aec0]">Provider pilihan</p>
+              <div className="rounded-2xl border-4 border-white bg-black p-4 text-sm text-white">
+                <p className="text-xs uppercase tracking-[0.2em] text-white">Provider pilihan</p>
                 <p className="mt-3 font-semibold text-white">{activeProviderConfig.label}</p>
-                <p className="mt-2 text-xs text-[#a0aec0]">Suno/Kie pakai API key browser. Modal bisa jalan tanpa key tambahan.</p>
+                <p className="mt-2 text-xs text-white">Suno/Kie pakai API key browser. Modal bisa jalan tanpa key tambahan.</p>
               </div>
-              <div className="rounded-2xl border border-[#2d3561] bg-[#1a1f3a] p-4 text-sm text-[#a0aec0]">
-                <p className="text-xs uppercase tracking-[0.2em] text-[#a0aec0]">Library</p>
+              <div className="rounded-2xl border-4 border-white bg-black p-4 text-sm text-white">
+                <p className="text-xs uppercase tracking-[0.2em] text-white">Library</p>
                 <p className="mt-3 font-semibold text-white">{totalTracks} track</p>
-                <p className="mt-2 text-xs text-[#a0aec0]">Tersimpan lokal di browser, bukan server.</p>
+                <p className="mt-2 text-xs text-white">Tersimpan lokal di browser, bukan server.</p>
               </div>
-              <div className="rounded-2xl border border-[#2d3561] bg-[#1a1f3a] p-4 text-sm text-[#a0aec0]">
-                <p className="text-xs uppercase tracking-[0.2em] text-[#a0aec0]">PWA</p>
+              <div className="rounded-2xl border-4 border-white bg-black p-4 text-sm text-white">
+                <p className="text-xs uppercase tracking-[0.2em] text-white">PWA</p>
                 <p className="mt-3 font-semibold text-white">
                   {isInstallSupported ? "Ready to install" : serviceWorkerReady ? "Service worker ready" : "Belum aktif"}
                 </p>
-                <p className="mt-2 text-xs text-[#a0aec0]">Install biar terasa kayak aplikasi beneran.</p>
+                <p className="mt-2 text-xs text-white">Install biar terasa kayak aplikasi beneran.</p>
               </div>
             </div>
 
             <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
               <div className="space-y-4 rounded-2xl loud-card">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-[#a0aec0]">Model Version</label>
+                  <label className="mb-2 block text-sm font-medium text-white">Model Version</label>
                   <select
                     value={settings.defaultModel}
                     onChange={(event) =>
@@ -1345,7 +1345,7 @@ export default function KampungLaguApp() {
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-[#a0aec0]">API Provider</label>
+                  <label className="mb-2 block text-sm font-medium text-white">API Provider</label>
                   <select
                     value={settings.apiProvider}
                     onChange={(event) =>
@@ -1364,7 +1364,7 @@ export default function KampungLaguApp() {
                   </select>
                 </div>
 
-                <div className="rounded-2xl border border-[#2d3561] bg-[#1a1f3a] p-4 text-sm text-[#a0aec0]">
+                <div className="rounded-2xl border-4 border-white bg-black p-4 text-sm text-white">
                   <p className="font-medium text-white">Endpoint info</p>
                   <ul className="mt-3 space-y-2 text-sm">
                     <li>• Provider: {activeProviderConfig.label}</li>
@@ -1376,8 +1376,8 @@ export default function KampungLaguApp() {
 
                 <div>
                   <div className="mb-2 flex items-center justify-between gap-3">
-                    <label className="block text-sm font-medium text-[#a0aec0]">API Keys</label>
-                    <span className="text-xs text-[#a0aec0]">{configuredApiKeyCount} key tersimpan</span>
+                    <label className="block text-sm font-medium text-white">API Keys</label>
+                    <span className="text-xs text-white">{configuredApiKeyCount} key tersimpan</span>
                   </div>
                   <textarea
                     value={settings.apiKeys}
@@ -1388,12 +1388,12 @@ export default function KampungLaguApp() {
                     placeholder={`Tempel API key ${activeProviderConfig.label}, satu key per baris...`}
                     className={fieldClassName}
                   />
-                  <p className="mt-2 text-xs text-[#a0aec0]">
+                  <p className="mt-2 text-xs text-white">
                     Disimpan lokal di browser ini. Kalau provider Suno/Kie dipilih dan key ada, generate akan pakai provider itu. Kalau key kosong, auto fallback ke Modal.
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-[#2d3561] bg-[#1a1f3a] p-4 text-sm text-[#a0aec0]">
+                <div className="rounded-2xl border-4 border-white bg-black p-4 text-sm text-white">
                   <p className="font-medium text-white">Status Generate</p>
                   <ul className="mt-3 space-y-2 text-sm">
                     <li>• Ready: {readyTracks}</li>
@@ -1414,9 +1414,9 @@ export default function KampungLaguApp() {
 
               <div className="space-y-4 rounded-2xl loud-card">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-[#a0aec0]">Install aplikasi</p>
+                  <p className="text-xs uppercase tracking-[0.2em] text-white">Install aplikasi</p>
                   <h3 className="mt-2 text-lg font-semibold text-white">PWA Install</h3>
-                  <p className="mt-2 text-sm text-[#a0aec0]">
+                  <p className="mt-2 text-sm text-white">
                     Pasang SongMaker di home screen/desktop biar aksesnya lebih cepat.
                   </p>
                 </div>
@@ -1425,12 +1425,12 @@ export default function KampungLaguApp() {
                   type="button"
                   onClick={handleInstallApp}
                   disabled={!isInstallSupported}
-                  className="w-full rounded-2xl border border-[#2d3561] px-4 py-3 font-medium text-white transition hover:border-[#00d9ff] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="w-full rounded-2xl border-4 border-white px-4 py-3 font-medium text-white transition hover:border-[#00d9ff] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isInstallSupported ? "Install SongMaker" : "Install belum tersedia"}
                 </button>
 
-                <div className="rounded-2xl border border-[#2d3561] bg-[#1a1f3a] p-4 text-sm text-[#a0aec0]">
+                <div className="rounded-2xl border-4 border-white bg-black p-4 text-sm text-white">
                   <p className="font-medium text-white">Checklist PWA</p>
                   <ul className="mt-2 space-y-2">
                     <li>• Manifest: aktif</li>
@@ -1439,7 +1439,7 @@ export default function KampungLaguApp() {
                   </ul>
                 </div>
 
-                <div className="rounded-2xl border border-[#2d3561] bg-[#1a1f3a] p-4 text-sm text-[#a0aec0]">
+                <div className="rounded-2xl border-4 border-white bg-black p-4 text-sm text-white">
                   <p>Tip:</p>
                   <p className="mt-2">Kalau tombol install belum muncul, buka pakai Chrome/Edge, refresh sekali, lalu buka menu browser.</p>
                 </div>
@@ -1450,15 +1450,15 @@ export default function KampungLaguApp() {
       </main>
 
       {nowPlaying && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#2d3561] bg-[#1a1f3a]/95 backdrop-blur-xl">
+        <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-white bg-black/95 backdrop-blur-xl">
           <div className="mx-auto max-w-6xl px-4 py-4">
-            <div className="relative rounded-[28px] border border-[#2d3561] bg-white p-4 shadow-[0_-24px_60px_rgba(0,0,0,0.45)]">
+            <div className="relative rounded-[28px] border-4 border-white bg-black p-4 shadow-[0_-24px_60px_rgba(0,0,0,0.45)]">
               <button
                 type="button"
                 aria-label="Close player"
                 title="Close player"
                 onClick={() => setNowPlaying(null)}
-                className="absolute right-4 top-4 z-20 rounded-full border border-[#2d3561] px-3 py-2 text-sm text-[#a0aec0] transition hover:border-[#00d9ff] hover:text-white"
+                className="absolute right-4 top-4 z-20 rounded-none border-4 border-white px-3 py-2 text-sm text-white transition hover:border-[#00d9ff] hover:text-white"
               >
                 ✕
               </button>
@@ -1468,23 +1468,23 @@ export default function KampungLaguApp() {
                     className={`relative flex h-20 w-20 shrink-0 items-end justify-start overflow-hidden rounded-3xl bg-gradient-to-br ${nowPlayingThumbnail.accentClassName} p-4 shadow-[0_18px_40px_rgba(0,0,0,0.35)]`}
                   >
                     <img src={nowPlayingThumbnail.artworkDataUrl} alt={`Thumbnail ${nowPlaying.title}`} className="absolute inset-0 h-full w-full object-cover opacity-90" />
-                    <div className="absolute inset-0 bg-[#1a1f3a]/10" />
+                    <div className="absolute inset-0 bg-black/10" />
                     <span className="relative z-10 text-2xl font-semibold tracking-[0.22em] text-white/80">{nowPlayingThumbnail.initials}</span>
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded-full border border-[#2d3561] px-2 py-1 text-[11px] text-[#a0aec0]">Now Playing</span>
-                      <span className="rounded-full border border-[#2d3561] px-2 py-1 text-[11px] text-[#a0aec0]">
+                      <span className="rounded-none border-4 border-white px-2 py-1 text-[11px] text-white">Now Playing</span>
+                      <span className="rounded-none border-4 border-white px-2 py-1 text-[11px] text-white">
                         {nowPlayingIndex >= 0 ? `${nowPlayingIndex + 1}/${playableQueue.length}` : `${playableQueue.length} ready`}
                       </span>
                     </div>
                     <p className="mt-2 truncate text-lg font-semibold text-white">{nowPlaying.title}</p>
-                    <p className="mt-1 line-clamp-2 text-sm text-[#a0aec0]">{nowPlaying.description}</p>
-                    <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-[#a0aec0]">
-                      <span className="rounded-full border border-[#2d3561] px-2 py-1">{nowPlaying.model}</span>
-                      <span className="rounded-full border border-[#2d3561] px-2 py-1">{nowPlaying.type}</span>
+                    <p className="mt-1 line-clamp-2 text-sm text-white">{nowPlaying.description}</p>
+                    <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-white">
+                      <span className="rounded-none border-4 border-white px-2 py-1">{nowPlaying.model}</span>
+                      <span className="rounded-none border-4 border-white px-2 py-1">{nowPlaying.type}</span>
                       {nowPlaying.tags.slice(0, 2).map((tag) => (
-                        <span key={tag} className="rounded-full border border-[#2d3561] px-2 py-1">{tag}</span>
+                        <span key={tag} className="rounded-none border-4 border-white px-2 py-1">{tag}</span>
                       ))}
                     </div>
                   </div>
@@ -1495,8 +1495,8 @@ export default function KampungLaguApp() {
                     <button
                       type="button"
                       onClick={() => setShuffleEnabled((prev) => !prev)}
-                      className={`rounded-full border px-3 py-2 text-xs transition ${
-                        shuffleEnabled ? "border-[#00d9ff] bg-[#1a1f3a] text-white" : "border-[#2d3561] text-[#a0aec0] hover:border-[#00d9ff]"
+                      className={`rounded-none border px-3 py-2 text-xs transition ${
+                        shuffleEnabled ? "border-[#00d9ff] bg-black text-white" : "border-white text-white hover:border-[#00d9ff]"
                       }`}
                     >
                       Shuffle
@@ -1504,29 +1504,29 @@ export default function KampungLaguApp() {
                     <button
                       type="button"
                       onClick={handlePreviousTrack}
-                      className="rounded-full border border-[#2d3561] px-3 py-2 text-sm text-gray-100 hover:border-[#00d9ff]"
+                      className="rounded-none border-4 border-white px-3 py-2 text-sm text-gray-100 hover:border-[#00d9ff]"
                     >
                       ⏮
                     </button>
                     <button
                       type="button"
                       onClick={handleTogglePlayback}
-                      className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-white hover:bg-[#252d48]"
+                      className="rounded-none bg-black px-5 py-3 text-sm font-semibold text-white hover:bg-[#252d48]"
                     >
                       {isPlayerPaused ? "▶ Play" : "⏸ Pause"}
                     </button>
                     <button
                       type="button"
                       onClick={handleNextTrack}
-                      className="rounded-full border border-[#2d3561] px-3 py-2 text-sm text-gray-100 hover:border-[#00d9ff]"
+                      className="rounded-none border-4 border-white px-3 py-2 text-sm text-gray-100 hover:border-[#00d9ff]"
                     >
                       ⏭
                     </button>
                     <button
                       type="button"
                       onClick={cycleRepeatMode}
-                      className={`rounded-full border px-3 py-2 text-xs transition ${
-                        repeatMode !== "off" ? "border-[#00d9ff] bg-[#1a1f3a] text-white" : "border-[#2d3561] text-[#a0aec0] hover:border-[#00d9ff]"
+                      className={`rounded-none border px-3 py-2 text-xs transition ${
+                        repeatMode !== "off" ? "border-[#00d9ff] bg-black text-white" : "border-white text-white hover:border-[#00d9ff]"
                       }`}
                     >
                       {repeatMode === "off" ? "Rpt Off" : repeatMode === "all" ? "Rpt All" : "Rpt 1"}
@@ -1535,7 +1535,7 @@ export default function KampungLaguApp() {
                       <button
                         type="button"
                         onClick={() => handleDownload(nowPlaying)}
-                        className="rounded-full border border-[#2d3561] px-3 py-2 text-xs text-[#a0aec0] transition hover:border-[#00d9ff]"
+                        className="rounded-none border-4 border-white px-3 py-2 text-xs text-white transition hover:border-[#00d9ff]"
                         title="Download track"
                       >
                         ⬇ Download
@@ -1544,7 +1544,7 @@ export default function KampungLaguApp() {
                       <button
                         type="button"
                         disabled
-                        className="rounded-full border border-[#2d3561] px-3 py-2 text-xs text-gray-600 disabled:cursor-not-allowed"
+                        className="rounded-none border-4 border-white px-3 py-2 text-xs text-gray-600 disabled:cursor-not-allowed"
                         title="Download track"
                       >
                         ⬇ Download
@@ -1552,7 +1552,7 @@ export default function KampungLaguApp() {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-3 text-xs text-[#a0aec0]">
+                  <div className="flex items-center gap-3 text-xs text-white">
                     <span className="w-10 text-right">{formatTime(currentTime)}</span>
                     <input
                       type="range"
@@ -1561,14 +1561,14 @@ export default function KampungLaguApp() {
                       step={0.1}
                       value={Math.min(currentTime, Math.max(duration, currentTime, 1))}
                       onChange={(event) => handleSeek(Number(event.target.value))}
-                      className="h-1.5 w-full cursor-pointer appearance-none rounded-full loud-card"
+                      className="h-1.5 w-full cursor-pointer appearance-none rounded-none loud-card"
                     />
                     <span className="w-10">{Number.isFinite(duration) && duration > 0 ? formatTime(duration) : "--:--"}</span>
                   </div>
                 </div>
 
-                <div className="space-y-3 rounded-3xl border border-[#2d3561] bg-[#1a1f3a]/60 p-4">
-                  <p className="text-xs text-[#a0aec0]">
+                <div className="space-y-3 rounded-3xl border-4 border-white bg-black/60 p-4">
+                  <p className="text-xs text-white">
                     {nowPlayingLyrics.length > 0
                       ? `${nowPlayingLyrics.length} baris lirik siap dibaca.`
                       : "Belum ada lirik. Cocok buat instrumental atau prompt singkat."}
