@@ -61,7 +61,7 @@ const defaultDraft: Draft = {
 const defaultSettings: Settings = {
   defaultModel: "MusicGen-Medium",
   endpointUrl: "",
-  useMockGeneration: false,
+  useMockGeneration: true,
 };
 
 export default function KampungLaguApp() {
@@ -256,6 +256,7 @@ export default function KampungLaguApp() {
     );
   }
 
+  // Render full UI regardless of hydration state
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Header */}
