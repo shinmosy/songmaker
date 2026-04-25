@@ -179,6 +179,7 @@ export default function KampungLaguApp() {
       note: isMockTrack
         ? "Ini placeholder lokal. Sambungkan endpoint open-source agar bisa generate audio real."
         : "Sedang generate audio...",
+      audioUrl: isMockTrack ? "/test-audio.mp3" : undefined,
     };
 
     setTracks((prev) => [newTrack, ...prev]);
@@ -486,19 +487,13 @@ export default function KampungLaguApp() {
                           </div>
                           <p className="text-xs text-gray-500 mt-2">{track.note}</p>
                           {/* Audio Player */}
-                          {track.status === "mock" ? (
-                            <div className="mt-3 p-3 bg-gray-800 rounded text-xs text-gray-400 text-center">
-                              🎵 Placeholder (endpoint belum terhubung)
-                            </div>
-                          ) : (
-                            <div className="mt-3">
-                              <audio
-                                controls
-                                className="w-full h-8 bg-gray-800 rounded"
-                                src={track.audioUrl || ""}
-                              />
-                            </div>
-                          )}
+                          <div className="mt-3">
+                            <audio
+                              controls
+                              className="w-full h-8 bg-gray-800 rounded"
+                              src={track.audioUrl || ""}
+                            />
+                          </div>
                         </div>
                         <button
                           onClick={() => deleteTrack(track.id)}
