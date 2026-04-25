@@ -808,10 +808,10 @@ export default function KampungLaguApp() {
               key={tab}
               type="button"
               onClick={() => setView(tab)}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+              className={`px-4 py-2 text-sm font-medium transition ${
                 view === tab
-                  ? "bg-[#1a1f3a] text-white"
-                  : "border border-[#2d3561] text-[#a0aec0] hover:border-[#00d9ff]"
+                  ? "bg-gradient-to-r from-[#00d9ff] to-[#8338ec] text-[#0a0e27] rounded-full shadow-lg shadow-[#00d9ff]/50"
+                  : "border border-[#2d3561] text-[#a0aec0] hover:border-[#00d9ff] rounded-full"
               }`}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
