@@ -21,6 +21,7 @@ interface Track {
   status: TrackStatus;
   createdAt: string;
   note: string;
+  audioUrl?: string;
 }
 
 interface Draft {
@@ -484,6 +485,16 @@ export default function KampungLaguApp() {
                             ))}
                           </div>
                           <p className="text-xs text-gray-500 mt-2">{track.note}</p>
+                          {/* Audio Player */}
+                          {track.status !== "mock" && (
+                            <div className="mt-3">
+                              <audio
+                                controls
+                                className="w-full h-8 bg-gray-800 rounded"
+                                src={track.audioUrl || ""}
+                              />
+                            </div>
+                          )}
                         </div>
                         <button
                           onClick={() => deleteTrack(track.id)}
