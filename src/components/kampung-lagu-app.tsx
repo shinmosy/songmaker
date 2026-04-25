@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 
 type View = "create" | "library" | "settings";
 type Mode = "Simple" | "Advanced" | "Sounds";
@@ -145,7 +145,7 @@ export default function KampungLaguApp() {
     }));
   };
 
-  const generateTrack = async () => {
+  const generateTrack = useCallback(async () => {
     console.log("generateTrack called");
     if (!draft.description.trim()) {
       setNotice("Deskripsi utama wajib diisi dulu.");
@@ -231,7 +231,7 @@ export default function KampungLaguApp() {
       );
       setNotice(`Error generating audio: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
-  };
+  }, [draft, setTracks, setNotice, setDraft]);
 
   const deleteTrack = (id: string) => {
     setTracks((prev) => prev.filter((t) => t.id !== id));
