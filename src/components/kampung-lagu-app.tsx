@@ -187,6 +187,7 @@ export default function KampungLaguApp() {
     };
 
     setTracks((prev) => [newTrack, ...prev]);
+    console.log("Track added:", newTrack);
     setView("library");
     setNotice(
       isMockTrack
