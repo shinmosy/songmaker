@@ -10,22 +10,12 @@ interface User {
   verified: boolean;
 }
 
-interface InboxMessage {
-  id: string;
-  to: string;
-  subject: string;
-  body: string;
-  code: string;
-  timestamp: string;
-}
-
 export default function AdminPanel() {
   const [authenticated, setAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [users, setUsers] = useState<Record<string, User>>({});
-  const [inbox, setInbox] = useState<InboxMessage[]>([]);
   const [showPasswords, setShowPasswords] = useState(false);
-  const [activeTab, setActiveTab] = useState<'users' | 'inbox' | 'stats'>('stats');
+  const [activeTab, setActiveTab] = useState<'users' | 'stats'>('stats');
 
   const ADMIN_PASSWORD = 'admin123456';
 
@@ -37,10 +27,8 @@ export default function AdminPanel() {
 
   const loadData = () => {
     const usersData = JSON.parse(localStorage.getItem('songmaker-users') || '{}');
-    const inboxData = JSON.parse(localStorage.getItem('songmaker-inbox') || '[]');
     
     setUsers(usersData);
-    setInbox(inboxData);
   };
 
   const handleLogin = (e: React.FormEvent) => {
@@ -62,25 +50,16 @@ export default function AdminPanel() {
     }
   };
 
-  const deleteInboxMessage = (index: number) => {
-    const newInbox = inbox.filter((_, i) => i !== index);
-    setInbox(newInbox);
-    localStorage.setItem('songmaker-inbox', JSON.stringify(newInbox));
-  };
-
   const clearAll = () => {
     if (confirm('Clear ALL data? This cannot be undone.')) {
       setUsers({});
-      setInbox([]);
       localStorage.setItem('songmaker-users', '{}');
-      localStorage.setItem('songmaker-inbox', '[]');
     }
   };
 
   const exportData = () => {
     const data = {
       users,
-      inbox,
       exportedAt: new Date().toISOString(),
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -126,7 +105,6 @@ export default function AdminPanel() {
     totalUsers: Object.keys(users).length,
     verifiedUsers: Object.values(users).filter(u => u.verified).length,
     unverifiedUsers: Object.values(users).filter(u => !u.verified).length,
-    totalInbox: inbox.length,
   };
 
   return (
@@ -149,7 +127,7 @@ export default function AdminPanel() {
 
         {/* Tabs */}
         <div className="flex gap-2 mb-8 flex-wrap">
-          {(['stats', 'users', 'inbox'] as const).map((tab) => (
+          {(['stats', 'users'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -166,7 +144,7 @@ export default function AdminPanel() {
 
         {/* Stats Tab */}
         {activeTab === 'stats' && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="bg-slate-800/50 backdrop-blur-xl border border-purple-500/20 rounded-xl p-6">
               <p className="text-slate-400 text-sm mb-2">Total Users</p>
               <p className="text-4xl font-bold text-purple-400">{stats.totalUsers}</p>
@@ -178,10 +156,6 @@ export default function AdminPanel() {
             <div className="bg-slate-800/50 backdrop-blur-xl border border-purple-500/20 rounded-xl p-6">
               <p className="text-slate-400 text-sm mb-2">Unverified</p>
               <p className="text-4xl font-bold text-yellow-400">{stats.unverifiedUsers}</p>
-            </div>
-            <div className="bg-slate-800/50 backdrop-blur-xl border border-purple-500/20 rounded-xl p-6">
-              <p className="text-slate-400 text-sm mb-2">Inbox Messages</p>
-              <p className="text-4xl font-bold text-blue-400">{stats.totalInbox}</p>
             </div>
           </div>
         )}
@@ -217,40 +191,6 @@ export default function AdminPanel() {
                     </div>
                     <button
                       onClick={() => deleteUser(email)}
-                      className="ml-4 p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Inbox Tab */}
-        {activeTab === 'inbox' && (
-          <div className="bg-slate-800/50 backdrop-blur-xl border border-purple-500/20 rounded-xl p-6">
-            <h2 className="text-xl font-bold text-white mb-6">Mock Inbox ({stats.totalInbox})</h2>
-            
-            {inbox.length === 0 ? (
-              <p className="text-slate-400">No inbox messages</p>
-            ) : (
-              <div className="space-y-3">
-                {inbox.map((msg, idx) => (
-                  <div key={idx} className="bg-slate-700/30 border border-slate-600/50 rounded-lg p-4 flex items-center justify-between">
-                    <div className="flex-1">
-                      <p className="text-white font-medium">{msg.to}</p>
-                      <p className="text-slate-400 text-sm">{msg.subject}</p>
-                      <p className="text-slate-400 text-sm">
-                        Code: <span className="font-mono text-blue-400">{msg.code}</span>
-                      </p>
-                      <p className="text-slate-500 text-xs mt-1">
-                        {new Date(msg.timestamp).toLocaleString()}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => deleteInboxMessage(idx)}
                       className="ml-4 p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />

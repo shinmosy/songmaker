@@ -13,7 +13,6 @@ interface MockUser {
 
 interface SignUpResult {
   verificationCode: string;
-  deliveryMethod: "email" | "mock";
 }
 
 interface AuthContextType {
@@ -81,19 +80,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     localStorage.setItem("songmaker-users", JSON.stringify(users));
 
-    // Store verification code in mock inbox (for development)
-    const inbox = JSON.parse(localStorage.getItem("songmaker-inbox") || "[]");
-    inbox.push({
-      id: `email-${Date.now()}`,
-      to: email,
-      subject: "Verify your SongMaker account",
-      body: `Your verification code is: ${verificationCode}`,
-      code: verificationCode,
-      timestamp: new Date().toISOString(),
-    });
-    localStorage.setItem("songmaker-inbox", JSON.stringify(inbox));
-
-    return { verificationCode, deliveryMethod: "mock" };
+    // TODO: Send verification email via API (implement real email sending)
+    // For now, return code to frontend for display
+    
+    return { verificationCode };
   };
 
   const verifyEmail = async (email: string, code: string) => {
