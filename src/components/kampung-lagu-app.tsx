@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { WaveformPreview } from "./waveform-preview";
+import { useAuth } from "../lib/auth-context";
 import {
   MODEL_VERSION_OPTIONS,
   PROVIDER_OPTIONS,
@@ -39,7 +41,6 @@ interface Draft {
   type: TrackType;
   gender: VocalGender;
   tags: string[];
-  // Advanced mode fields
   tempo?: number;
   duration?: number;
   instruments?: string[];
@@ -57,11 +58,14 @@ const STORAGE_KEYS = {
   draft: "songmaker-draft",
   settings: "songmaker-settings",
   view: "songmaker-view",
+  generateCount: "songmaker-generate-count",
 };
 
 const TITLE_LIMIT = 120;
 const DESCRIPTION_LIMIT = 1000;
 const LYRICS_LIMIT = 5000;
+const UNSIGNED_USER_LIMIT = 2;
+
 const TAG_OPTIONS = [
   "Lo-fi",
   "Jazz",
@@ -115,6 +119,9 @@ const defaultDraft: Draft = {
 };
 
 export default function SongMakerApp() {
+  const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
+
   const [view, setView] = useState<View>("create");
   const [draft, setDraft] = useState<Draft>(defaultDraft);
   const [library, setLibrary] = useState<Track[]>([]);
@@ -127,10 +134,12 @@ export default function SongMakerApp() {
   const [error, setError] = useState<string | null>(null);
   const [playingTrackId, setPlayingTrackId] = useState<string | null>(null);
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+  const [generateCount, setGenerateCount] = useState(0);
+  const [showSignUpPrompt, setShowSignUpPrompt] = useState(false);
 
-  // Load from localStorage
+  // Load from localStorage (unsigned users)
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || user) return;
 
     const savedView = localStorage.getItem(STORAGE_KEYS.view) as View | null;
     if (savedView) setView(savedView);
@@ -143,7 +152,10 @@ export default function SongMakerApp() {
 
     const savedSettings = localStorage.getItem(STORAGE_KEYS.settings);
     if (savedSettings) setSettings(JSON.parse(savedSettings));
-  }, []);
+
+    const savedCount = localStorage.getItem(STORAGE_KEYS.generateCount);
+    if (savedCount) setGenerateCount(parseInt(savedCount));
+  }, [user]);
 
   // Save to localStorage
   useEffect(() => {
@@ -166,9 +178,23 @@ export default function SongMakerApp() {
     localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(settings));
   }, [settings]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    localStorage.setItem(STORAGE_KEYS.generateCount, generateCount.toString());
+  }, [generateCount]);
+
   const generateTrack = useCallback(async () => {
     if (!draft.title.trim()) {
       setError("Judul lagu harus diisi");
+      return;
+    }
+
+    // Check rate limit for unsigned users
+    if (!user && generateCount >= UNSIGNED_USER_LIMIT) {
+      setShowSignUpPrompt(true);
+      setError(
+        `Limit tercapai (${UNSIGNED_USER_LIMIT} generates). Daftar untuk unlimited!`
+      );
       return;
     }
 
@@ -232,6 +258,11 @@ ${draft.description}
         )
       );
 
+      // Increment generate count for unsigned users
+      if (!user) {
+        setGenerateCount((prev) => prev + 1);
+      }
+
       setDraft(defaultDraft);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Generation failed");
@@ -245,11 +276,19 @@ ${draft.description}
     } finally {
       setIsLoading(false);
     }
-  }, [draft, error]);
+  }, [draft, error, user, generateCount]);
 
   const deleteTrack = useCallback((id: string) => {
     setLibrary((prev) => prev.filter((t) => t.id !== id));
   }, []);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <p className="text-gray-600">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -257,18 +296,39 @@ ${draft.description}
       <header className="border-b border-gray-200 sticky top-0 z-50 bg-white/95 backdrop-blur">
         <div className="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight">SongMaker</h1>
-          <p className="text-sm text-gray-600">AI Music Generation</p>
+          <div className="flex items-center gap-4">
+            {user ? (
+              <div className="text-sm">
+                <p className="text-gray-600">Signed in as</p>
+                <p className="font-medium">{user.email}</p>
+              </div>
+            ) : (
+              <div className="text-sm text-gray-600">
+                {generateCount}/{UNSIGNED_USER_LIMIT} generates used
+              </div>
+            )}
+            <button
+              onClick={() =>
+                router.push(user ? "/api/auth/logout" : "/signin")
+              }
+              className="px-4 py-2 text-sm font-medium btn-glass rounded-lg"
+            >
+              {user ? "Sign Out" : "Sign In"}
+            </button>
+          </div>
         </div>
       </header>
 
       {/* Navigation */}
       <nav className="border-b border-gray-200 bg-gray-50">
         <div className="max-w-7xl mx-auto px-6 flex gap-8">
-          {([
-            ["create", "Create"],
-            ["library", "Library"],
-            ["settings", "Settings"],
-          ] as const).map(([v, label]) => (
+          {(
+            [
+              ["create", "Create"],
+              ["library", "Library"],
+              ["settings", "Settings"],
+            ] as const
+          ).map(([v, label]) => (
             <button
               key={v}
               onClick={() => setView(v)}
@@ -289,6 +349,20 @@ ${draft.description}
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
             {error}
+          </div>
+        )}
+
+        {showSignUpPrompt && !user && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-blue-900 text-sm mb-3">
+              Kamu udah pake 2 generates gratis. Daftar sekarang untuk unlimited!
+            </p>
+            <button
+              onClick={() => router.push("/signup")}
+              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700"
+            >
+              Sign Up Now
+            </button>
           </div>
         )}
 
@@ -367,7 +441,9 @@ ${draft.description}
                 {draft.mode === "Advanced" && (
                   <div className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
                     <button
-                      onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
+                      onClick={() =>
+                        setShowAdvancedSettings(!showAdvancedSettings)
+                      }
                       className="w-full flex items-center justify-between font-semibold text-sm hover:text-gray-700 transition-colors"
                     >
                       <span>MusicGen Settings</span>
@@ -430,9 +506,7 @@ ${draft.description}
                         {MOOD_OPTIONS.map((mood) => (
                           <button
                             key={mood}
-                            onClick={() =>
-                              setDraft({ ...draft, mood })
-                            }
+                            onClick={() => setDraft({ ...draft, mood })}
                             className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
                               draft.mood === mood
                                 ? "btn-glass"
@@ -548,7 +622,7 @@ ${draft.description}
                 <div className="flex gap-3 pt-4">
                   <button
                     onClick={generateTrack}
-                    disabled={isLoading}
+                    disabled={isLoading || (!user && generateCount >= UNSIGNED_USER_LIMIT)}
                     className="flex-1 bg-black text-white py-3 rounded-lg font-medium hover:bg-gray-900 disabled:opacity-50 transition-all"
                   >
                     {isLoading ? "Generating..." : "Generate"}
