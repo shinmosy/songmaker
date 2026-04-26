@@ -19,9 +19,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const supabase = createClient();
+  const [supabase] = useState(() => {
+    if (typeof window === "undefined") return null;
+    return createClient();
+  });
 
   useEffect(() => {
+    if (!supabase) {
+      setIsLoading(false);
+      return;
+    }
     // Check current session
     const checkSession = async () => {
       try {
@@ -51,6 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [supabase]);
 
   const signUp = async (email: string, password: string) => {
+    if (!supabase) throw new Error("Supabase not initialized");
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -59,6 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
+    if (!supabase) throw new Error("Supabase not initialized");
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -67,6 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
+    if (!supabase) throw new Error("Supabase not initialized");
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   };
