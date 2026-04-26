@@ -61,9 +61,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error("Password must be at least 9 characters");
     }
 
-    // Check if user already exists
+    // Check if user already exists (verified or pending)
     const users = JSON.parse(localStorage.getItem("songmaker-users") || "{}");
-    if (users[email]) {
+    const pendingSignUps = JSON.parse(
+      localStorage.getItem("songmaker-pending-signups") || "{}"
+    );
+    
+    if (users[email] || pendingSignUps[email]) {
       throw new Error("Email already registered");
     }
 
@@ -71,9 +75,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const verificationCode = generateVerificationCode();
 
     // Store pending sign up
-    const pendingSignUps = JSON.parse(
-      localStorage.getItem("songmaker-pending-signups") || "{}"
-    );
     pendingSignUps[email] = {
       email,
       passwordHash: btoa(password),
