@@ -12,9 +12,35 @@ export default function AuthPage({ mode }: { mode: "signup" | "signin" }) {
   const { signUp, signIn } = useAuth();
   const router = useRouter();
 
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePassword = (password: string): boolean => {
+    return password.length >= 9;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    // Validation
+    if (!validateEmail(email)) {
+      setError("Please enter a valid email address");
+      return;
+    }
+
+    if (mode === "signup" && !validatePassword(password)) {
+      setError("Password must be at least 9 characters");
+      return;
+    }
+
+    if (mode === "signin" && !password) {
+      setError("Password is required");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -56,19 +82,24 @@ export default function AuthPage({ mode }: { mode: "signup" | "signin" }) {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               required
-              className="w-full"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Password</label>
+            <label className="block text-sm font-medium mb-2">
+              Password
+              {mode === "signup" && (
+                <span className="text-gray-500 text-xs ml-1">(min 9 characters)</span>
+              )}
+            </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
-              className="w-full"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
             />
           </div>
 

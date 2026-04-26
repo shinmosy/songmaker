@@ -5,6 +5,7 @@ const supabase = createClient();
 
 // Tracks
 export async function getTracks(userId: string): Promise<Track[]> {
+  if (!supabase) return [];
   const { data, error } = await supabase
     .from("tracks")
     .select("*")
@@ -16,6 +17,7 @@ export async function getTracks(userId: string): Promise<Track[]> {
 }
 
 export async function createTrack(userId: string, track: Omit<Track, "id" | "created_at" | "updated_at">) {
+  if (!supabase) throw new Error("Supabase not initialized");
   const { data, error } = await supabase
     .from("tracks")
     .insert([{ ...track, user_id: userId }])
@@ -27,6 +29,7 @@ export async function createTrack(userId: string, track: Omit<Track, "id" | "cre
 }
 
 export async function updateTrack(trackId: string, updates: Partial<Track>) {
+  if (!supabase) throw new Error("Supabase not initialized");
   const { data, error } = await supabase
     .from("tracks")
     .update(updates)
@@ -39,6 +42,7 @@ export async function updateTrack(trackId: string, updates: Partial<Track>) {
 }
 
 export async function deleteTrack(trackId: string) {
+  if (!supabase) throw new Error("Supabase not initialized");
   const { error } = await supabase
     .from("tracks")
     .delete()
@@ -49,6 +53,7 @@ export async function deleteTrack(trackId: string) {
 
 // API Keys
 export async function getApiKey(userId: string, provider: string) {
+  if (!supabase) return null;
   const { data, error } = await supabase
     .from("api_keys")
     .select("key_encrypted")
@@ -61,6 +66,7 @@ export async function getApiKey(userId: string, provider: string) {
 }
 
 export async function saveApiKey(userId: string, provider: string, keyEncrypted: string) {
+  if (!supabase) throw new Error("Supabase not initialized");
   const { error } = await supabase
     .from("api_keys")
     .upsert([{ user_id: userId, provider, key_encrypted: keyEncrypted }]);
@@ -70,6 +76,7 @@ export async function saveApiKey(userId: string, provider: string, keyEncrypted:
 
 // Generation Count
 export async function getGenerationCount(userId: string): Promise<number> {
+  if (!supabase) return 0;
   const { data, error } = await supabase
     .from("generation_counts")
     .select("count, reset_at")
@@ -99,6 +106,7 @@ export async function getGenerationCount(userId: string): Promise<number> {
 }
 
 export async function incrementGenerationCount(userId: string) {
+  if (!supabase) throw new Error("Supabase not initialized");
   const currentCount = await getGenerationCount(userId);
   const { error } = await supabase
     .from("generation_counts")

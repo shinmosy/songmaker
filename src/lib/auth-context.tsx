@@ -1,12 +1,15 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { User, Session } from "@supabase/supabase-js";
-import { createClient } from "@/lib/supabase/client";
+
+interface MockUser {
+  id: string;
+  email: string;
+  role: "user" | "admin";
+}
 
 interface AuthContextType {
-  user: User | null;
-  session: Session | null;
+  user: MockUser | null;
   isLoading: boolean;
   signUp: (email: string, password: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
@@ -16,76 +19,99 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<MockUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [supabase] = useState(() => {
-    if (typeof window === "undefined") return null;
-    return createClient();
-  });
 
+  // Load user from localStorage on mount
   useEffect(() => {
-    if (!supabase) {
-      setIsLoading(false);
-      return;
-    }
-    // Check current session
-    const checkSession = async () => {
+    const storedUser = localStorage.getItem("songmaker-user");
+    if (storedUser) {
       try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        setSession(session);
-        setUser(session?.user ?? null);
+        setUser(JSON.parse(storedUser));
       } catch (error) {
-        console.error("Error checking session:", error);
-      } finally {
-        setIsLoading(false);
+        console.error("Error parsing stored user:", error);
       }
-    };
-
-    checkSession();
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription?.unsubscribe();
-  }, [supabase]);
+    }
+    setIsLoading(false);
+  }, []);
 
   const signUp = async (email: string, password: string) => {
-    if (!supabase) throw new Error("Supabase not initialized");
-    const { error } = await supabase.auth.signUp({
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw new Error("Please enter a valid email address");
+    }
+
+    // Validate password length
+    if (password.length < 9) {
+      throw new Error("Password must be at least 9 characters");
+    }
+
+    // Check if user already exists
+    const users = JSON.parse(localStorage.getItem("songmaker-users") || "{}");
+    if (users[email]) {
+      throw new Error("Email already registered");
+    }
+
+    // Create new user
+    const newUser: MockUser = {
+      id: `user-${Date.now()}`,
       email,
-      password,
-    });
-    if (error) throw error;
+      role: "user",
+    };
+
+    // Store password hash (simple base64 for demo, NOT production-safe)
+    users[email] = {
+      id: newUser.id,
+      passwordHash: btoa(password),
+      role: "user",
+    };
+
+    localStorage.setItem("songmaker-users", JSON.stringify(users));
+    localStorage.setItem("songmaker-user", JSON.stringify(newUser));
+    setUser(newUser);
   };
 
   const signIn = async (email: string, password: string) => {
-    if (!supabase) throw new Error("Supabase not initialized");
-    const { error } = await supabase.auth.signInWithPassword({
+    // Hardcoded admin bypass
+    if (email === "admin" && password === "superadmin") {
+      const adminUser: MockUser = {
+        id: "admin-001",
+        email: "admin",
+        role: "admin",
+      };
+      localStorage.setItem("songmaker-user", JSON.stringify(adminUser));
+      setUser(adminUser);
+      return;
+    }
+
+    // Check user credentials
+    const users = JSON.parse(localStorage.getItem("songmaker-users") || "{}");
+    const userRecord = users[email];
+
+    if (!userRecord || userRecord.passwordHash !== btoa(password)) {
+      throw new Error("Invalid email or password");
+    }
+
+    const loggedInUser: MockUser = {
+      id: userRecord.id,
       email,
-      password,
-    });
-    if (error) throw error;
+      role: userRecord.role,
+    };
+
+    localStorage.setItem("songmaker-user", JSON.stringify(loggedInUser));
+    setUser(loggedInUser);
   };
 
   const signOut = async () => {
-    if (!supabase) throw new Error("Supabase not initialized");
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    localStorage.removeItem("songmaker-user");
+    setUser(null);
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        session,
         isLoading,
         signUp,
         signIn,
