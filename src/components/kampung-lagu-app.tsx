@@ -126,6 +126,7 @@ export default function SongMakerApp() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [playingTrackId, setPlayingTrackId] = useState<string | null>(null);
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
 
   // Load from localStorage
   useEffect(() => {
@@ -365,48 +366,60 @@ ${draft.description}
                 {/* Advanced Mode Fields */}
                 {draft.mode === "Advanced" && (
                   <div className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <h3 className="font-semibold text-sm">Advanced Settings</h3>
+                    <button
+                      onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
+                      className="w-full flex items-center justify-between font-semibold text-sm hover:text-gray-700 transition-colors"
+                    >
+                      <span>MusicGen Settings</span>
+                      <span className="text-lg">
+                        {showAdvancedSettings ? "−" : "+"}
+                      </span>
+                    </button>
 
-                    {/* Tempo */}
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Tempo (BPM): {draft.tempo}
-                      </label>
-                      <input
-                        type="range"
-                        min="60"
-                        max="200"
-                        value={draft.tempo || 120}
-                        onChange={(e) =>
-                          setDraft({
-                            ...draft,
-                            tempo: parseInt(e.target.value),
-                          })
-                        }
-                        className="w-full"
-                      />
-                    </div>
+                    {showAdvancedSettings && (
+                      <div className="space-y-4 pt-2 border-t border-gray-200">
+                        {/* Tempo */}
+                        <div>
+                          <label className="block text-sm font-medium mb-2">
+                            Tempo (BPM): {draft.tempo}
+                          </label>
+                          <input
+                            type="range"
+                            min="60"
+                            max="200"
+                            value={draft.tempo || 120}
+                            onChange={(e) =>
+                              setDraft({
+                                ...draft,
+                                tempo: parseInt(e.target.value),
+                              })
+                            }
+                            className="w-full"
+                          />
+                        </div>
 
-                    {/* Duration */}
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Duration (seconds): {draft.duration}
-                      </label>
-                      <input
-                        type="range"
-                        min="30"
-                        max="600"
-                        step="30"
-                        value={draft.duration || 180}
-                        onChange={(e) =>
-                          setDraft({
-                            ...draft,
-                            duration: parseInt(e.target.value),
-                          })
-                        }
-                        className="w-full"
-                      />
-                    </div>
+                        {/* Duration */}
+                        <div>
+                          <label className="block text-sm font-medium mb-2">
+                            Track Length (seconds): {draft.duration}
+                          </label>
+                          <input
+                            type="range"
+                            min="30"
+                            max="600"
+                            step="30"
+                            value={draft.duration || 180}
+                            onChange={(e) =>
+                              setDraft({
+                                ...draft,
+                                duration: parseInt(e.target.value),
+                              })
+                            }
+                            className="w-full"
+                          />
+                        </div>
+                      </div>
+                    )}
 
                     {/* Mood */}
                     <div>
