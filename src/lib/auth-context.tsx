@@ -81,47 +81,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     localStorage.setItem("songmaker-users", JSON.stringify(users));
 
-    let deliveryMethod: SignUpResult["deliveryMethod"] = "email";
+    // Store verification code in mock inbox (for development)
+    const inbox = JSON.parse(localStorage.getItem("songmaker-inbox") || "[]");
+    inbox.push({
+      id: `email-${Date.now()}`,
+      to: email,
+      subject: "Verify your SongMaker account",
+      body: `Your verification code is: ${verificationCode}`,
+      code: verificationCode,
+      timestamp: new Date().toISOString(),
+    });
+    localStorage.setItem("songmaker-inbox", JSON.stringify(inbox));
 
-    // Send verification email via API
-    try {
-      const response = await fetch("/api/send-verification", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, verificationCode }),
-      });
-
-      const payload = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        throw new Error(
-          payload?.detail || payload?.error || "Failed to send verification email"
-        );
-      }
-
-      const inbox = JSON.parse(localStorage.getItem("songmaker-inbox") || "[]");
-      const filteredInbox = inbox.filter(
-        (message: { to?: string }) => message.to !== email
-      );
-      localStorage.setItem("songmaker-inbox", JSON.stringify(filteredInbox));
-    } catch (error) {
-      console.error("Email send error:", error);
-      deliveryMethod = "mock";
-
-      // Fallback: store in mock inbox for testing
-      const inbox = JSON.parse(localStorage.getItem("songmaker-inbox") || "[]");
-      inbox.push({
-        id: `email-${Date.now()}`,
-        to: email,
-        subject: "Verify your SongMaker account",
-        body: `Your verification code is: ${verificationCode}`,
-        code: verificationCode,
-        timestamp: new Date().toISOString(),
-      });
-      localStorage.setItem("songmaker-inbox", JSON.stringify(inbox));
-    }
-
-    return { verificationCode, deliveryMethod };
+    return { verificationCode, deliveryMethod: "mock" };
   };
 
   const verifyEmail = async (email: string, code: string) => {
