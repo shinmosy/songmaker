@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { WaveformPreview } from "./waveform-preview";
 import {
   MODEL_VERSION_OPTIONS,
   PROVIDER_OPTIONS,
@@ -38,6 +39,11 @@ interface Draft {
   type: TrackType;
   gender: VocalGender;
   tags: string[];
+  // Advanced mode fields
+  tempo?: number;
+  duration?: number;
+  instruments?: string[];
+  mood?: string;
 }
 
 interface Settings {
@@ -69,6 +75,30 @@ const TAG_OPTIONS = [
   "Cinematic",
 ];
 
+const MOOD_OPTIONS = [
+  "Happy",
+  "Sad",
+  "Energetic",
+  "Calm",
+  "Melancholic",
+  "Uplifting",
+  "Dark",
+  "Playful",
+];
+
+const INSTRUMENT_OPTIONS = [
+  "Piano",
+  "Guitar",
+  "Synth",
+  "Drums",
+  "Bass",
+  "Strings",
+  "Brass",
+  "Woodwinds",
+  "Vocals",
+  "Percussion",
+];
+
 const defaultDraft: Draft = {
   title: "",
   description: "",
@@ -78,6 +108,10 @@ const defaultDraft: Draft = {
   type: "Instrumental",
   gender: "Male",
   tags: [],
+  tempo: 120,
+  duration: 180,
+  instruments: [],
+  mood: "Energetic",
 };
 
 export default function SongMakerApp() {
@@ -91,6 +125,7 @@ export default function SongMakerApp() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [playingTrackId, setPlayingTrackId] = useState<string | null>(null);
 
   // Load from localStorage
   useEffect(() => {
@@ -142,13 +177,33 @@ export default function SongMakerApp() {
     try {
       const newTrack: Track = {
         id: Date.now().toString(),
-        ...draft,
+        title: draft.title,
+        description: draft.description,
+        lyrics: draft.lyrics,
+        model: draft.model,
+        mode: draft.mode,
+        type: draft.type,
+        gender: draft.gender,
+        tags: draft.tags,
         status: "generating",
         createdAt: new Date().toISOString(),
         note: "",
       };
 
       setLibrary((prev) => [newTrack, ...prev]);
+
+      // Build advanced prompt if in Advanced mode
+      let finalPrompt = draft.description;
+      if (draft.mode === "Advanced") {
+        finalPrompt = `
+Tempo: ${draft.tempo} BPM
+Duration: ${draft.duration}s
+Mood: ${draft.mood}
+Instruments: ${draft.instruments?.join(", ") || "Auto"}
+
+${draft.description}
+        `.trim();
+      }
 
       // Call Modal endpoint
       const response = await fetch(
@@ -157,7 +212,7 @@ export default function SongMakerApp() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            prompt: draft.description,
+            prompt: finalPrompt,
             title: draft.title,
           }),
         }
@@ -208,7 +263,11 @@ export default function SongMakerApp() {
       {/* Navigation */}
       <nav className="border-b border-gray-200 bg-gray-50">
         <div className="max-w-7xl mx-auto px-6 flex gap-8">
-          {(["create", "library", "settings"] as const).map((v) => (
+          {([
+            ["create", "Create"],
+            ["library", "Library"],
+            ["settings", "Settings"],
+          ] as const).map(([v, label]) => (
             <button
               key={v}
               onClick={() => setView(v)}
@@ -218,7 +277,7 @@ export default function SongMakerApp() {
                   : "border-transparent text-gray-600 hover:text-black"
               }`}
             >
-              {v.charAt(0).toUpperCase() + v.slice(1)}
+              {label}
             </button>
           ))}
         </div>
@@ -273,7 +332,7 @@ export default function SongMakerApp() {
                         onClick={() => setDraft({ ...draft, mode: m })}
                         className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
                           draft.mode === m
-                            ? "bg-black text-white"
+                            ? "btn-glass"
                             : "bg-gray-100 text-black hover:bg-gray-200"
                         }`}
                       >
@@ -293,7 +352,7 @@ export default function SongMakerApp() {
                         onClick={() => setDraft({ ...draft, type: t })}
                         className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
                           draft.type === t
-                            ? "bg-black text-white"
+                            ? "btn-glass"
                             : "bg-gray-100 text-black hover:bg-gray-200"
                         }`}
                       >
@@ -302,6 +361,112 @@ export default function SongMakerApp() {
                     ))}
                   </div>
                 </div>
+
+                {/* Advanced Mode Fields */}
+                {draft.mode === "Advanced" && (
+                  <div className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <h3 className="font-semibold text-sm">Advanced Settings</h3>
+
+                    {/* Tempo */}
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Tempo (BPM): {draft.tempo}
+                      </label>
+                      <input
+                        type="range"
+                        min="60"
+                        max="200"
+                        value={draft.tempo || 120}
+                        onChange={(e) =>
+                          setDraft({
+                            ...draft,
+                            tempo: parseInt(e.target.value),
+                          })
+                        }
+                        className="w-full"
+                      />
+                    </div>
+
+                    {/* Duration */}
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Duration (seconds): {draft.duration}
+                      </label>
+                      <input
+                        type="range"
+                        min="30"
+                        max="600"
+                        step="30"
+                        value={draft.duration || 180}
+                        onChange={(e) =>
+                          setDraft({
+                            ...draft,
+                            duration: parseInt(e.target.value),
+                          })
+                        }
+                        className="w-full"
+                      />
+                    </div>
+
+                    {/* Mood */}
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Mood
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {MOOD_OPTIONS.map((mood) => (
+                          <button
+                            key={mood}
+                            onClick={() =>
+                              setDraft({ ...draft, mood })
+                            }
+                            className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                              draft.mood === mood
+                                ? "btn-glass"
+                                : "bg-gray-100 text-black hover:bg-gray-200"
+                            }`}
+                          >
+                            {mood}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Instruments */}
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Instruments
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {INSTRUMENT_OPTIONS.map((inst) => (
+                          <button
+                            key={inst}
+                            onClick={() => {
+                              const newInstruments = (
+                                draft.instruments || []
+                              ).includes(inst)
+                                ? (draft.instruments || []).filter(
+                                    (i) => i !== inst
+                                  )
+                                : [...(draft.instruments || []), inst];
+                              setDraft({
+                                ...draft,
+                                instruments: newInstruments,
+                              });
+                            }}
+                            className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                              (draft.instruments || []).includes(inst)
+                                ? "btn-glass"
+                                : "bg-gray-100 text-black hover:bg-gray-200"
+                            }`}
+                          >
+                            {inst}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Description */}
                 <div>
@@ -337,7 +502,7 @@ export default function SongMakerApp() {
                         }}
                         className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
                           draft.tags.includes(tag)
-                            ? "bg-black text-white"
+                            ? "btn-glass"
                             : "bg-gray-100 text-black hover:bg-gray-200"
                         }`}
                       >
@@ -377,7 +542,7 @@ export default function SongMakerApp() {
                   </button>
                   <button
                     onClick={() => setDraft(defaultDraft)}
-                    className="flex-1 bg-gray-100 text-black py-3 rounded-lg font-medium hover:bg-gray-200 transition-all"
+                    className="flex-1 btn-glass py-3 rounded-lg font-medium"
                   >
                     Clear
                   </button>
@@ -401,6 +566,18 @@ export default function SongMakerApp() {
                       <span className="text-gray-600">Genres:</span>
                       <span className="font-medium">{draft.tags.length}</span>
                     </div>
+                    {draft.mode === "Advanced" && (
+                      <>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Tempo:</span>
+                          <span className="font-medium">{draft.tempo} BPM</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Duration:</span>
+                          <span className="font-medium">{draft.duration}s</span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -433,7 +610,9 @@ export default function SongMakerApp() {
 
             {library.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-gray-600">No tracks yet. Create one to get started!</p>
+                <p className="text-gray-600">
+                  No tracks yet. Create one to get started!
+                </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -454,13 +633,28 @@ export default function SongMakerApp() {
                         {track.type}
                       </span>
                     </div>
+
+                    {/* Waveform Preview */}
+                    {track.audioUrl && (
+                      <div className="mb-4">
+                        <WaveformPreview
+                          audioUrl={track.audioUrl}
+                          isPlaying={playingTrackId === track.id}
+                        />
+                      </div>
+                    )}
+
+                    {/* Audio Player */}
                     {track.audioUrl && (
                       <audio
                         controls
                         src={track.audioUrl}
+                        onPlay={() => setPlayingTrackId(track.id)}
+                        onPause={() => setPlayingTrackId(null)}
                         className="w-full mb-4"
                       />
                     )}
+
                     <button
                       onClick={() => deleteTrack(track.id)}
                       className="w-full py-2 text-sm text-red-600 hover:bg-red-50 rounded transition-colors"
@@ -515,9 +709,9 @@ export default function SongMakerApp() {
                   }
                   className="w-full"
                 >
-                  {PROVIDER_OPTIONS.map((p, idx) => (
-                    <option key={idx} value={typeof p === 'string' ? p : p.value || ''}>
-                      {typeof p === 'string' ? p : p.value}
+                  {PROVIDER_OPTIONS.map((p) => (
+                    <option key={p.value} value={p.value}>
+                      {p.label}
                     </option>
                   ))}
                 </select>
@@ -528,19 +722,15 @@ export default function SongMakerApp() {
                   API Keys
                 </label>
                 <textarea
+                  placeholder="Paste your API keys here (keep private)"
                   value={settings.apiKeys}
                   onChange={(e) =>
                     setSettings({ ...settings, apiKeys: e.target.value })
                   }
-                  placeholder="Paste your API keys here (keep private)"
                   rows={4}
                   className="w-full"
                 />
               </div>
-
-              <button className="w-full bg-black text-white py-3 rounded-lg font-medium hover:bg-gray-900 transition-all">
-                Save Settings
-              </button>
             </div>
           </div>
         )}
