@@ -6,17 +6,31 @@ interface MockUser {
   id: string;
   email: string;
   role: "user" | "admin";
+  verified: boolean;
+}
+
+interface PendingSignUp {
+  email: string;
+  passwordHash: string;
+  verificationCode: string;
+  createdAt: number;
 }
 
 interface AuthContextType {
   user: MockUser | null;
   isLoading: boolean;
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<{ verificationCode: string }>;
+  verifyEmail: (email: string, code: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Generate 6-digit verification code
+const generateVerificationCode = (): string => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<MockUser | null>(null);
@@ -53,21 +67,85 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error("Email already registered");
     }
 
-    // Create new user
+    // Generate verification code
+    const verificationCode = generateVerificationCode();
+
+    // Store pending sign up
+    const pendingSignUps = JSON.parse(
+      localStorage.getItem("songmaker-pending-signups") || "{}"
+    );
+    pendingSignUps[email] = {
+      email,
+      passwordHash: btoa(password),
+      verificationCode,
+      createdAt: Date.now(),
+    } as PendingSignUp;
+
+    localStorage.setItem(
+      "songmaker-pending-signups",
+      JSON.stringify(pendingSignUps)
+    );
+
+    // Store in mock inbox
+    const inbox = JSON.parse(localStorage.getItem("songmaker-inbox") || "[]");
+    inbox.push({
+      id: `email-${Date.now()}`,
+      to: email,
+      subject: "Verify your SongMaker account",
+      body: `Your verification code is: ${verificationCode}`,
+      code: verificationCode,
+      timestamp: new Date().toISOString(),
+    });
+    localStorage.setItem("songmaker-inbox", JSON.stringify(inbox));
+
+    return { verificationCode };
+  };
+
+  const verifyEmail = async (email: string, code: string) => {
+    const pendingSignUps = JSON.parse(
+      localStorage.getItem("songmaker-pending-signups") || "{}"
+    );
+    const pending = pendingSignUps[email];
+
+    if (!pending) {
+      throw new Error("No pending sign up found for this email");
+    }
+
+    if (pending.verificationCode !== code) {
+      throw new Error("Invalid verification code");
+    }
+
+    // Check if code expired (24 hours)
+    if (Date.now() - pending.createdAt > 24 * 60 * 60 * 1000) {
+      throw new Error("Verification code expired");
+    }
+
+    // Create verified user
+    const users = JSON.parse(localStorage.getItem("songmaker-users") || "{}");
     const newUser: MockUser = {
       id: `user-${Date.now()}`,
       email,
       role: "user",
+      verified: true,
     };
 
-    // Store password hash (simple base64 for demo, NOT production-safe)
     users[email] = {
       id: newUser.id,
-      passwordHash: btoa(password),
+      passwordHash: pending.passwordHash,
       role: "user",
+      verified: true,
     };
 
     localStorage.setItem("songmaker-users", JSON.stringify(users));
+
+    // Remove from pending
+    delete pendingSignUps[email];
+    localStorage.setItem(
+      "songmaker-pending-signups",
+      JSON.stringify(pendingSignUps)
+    );
+
+    // Auto sign in
     localStorage.setItem("songmaker-user", JSON.stringify(newUser));
     setUser(newUser);
   };
@@ -79,6 +157,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: "admin-001",
         email: "admin",
         role: "admin",
+        verified: true,
       };
       localStorage.setItem("songmaker-user", JSON.stringify(adminUser));
       setUser(adminUser);
@@ -93,10 +172,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error("Invalid email or password");
     }
 
+    if (!userRecord.verified) {
+      throw new Error("Email not verified. Please check your inbox.");
+    }
+
     const loggedInUser: MockUser = {
       id: userRecord.id,
       email,
       role: userRecord.role,
+      verified: true,
     };
 
     localStorage.setItem("songmaker-user", JSON.stringify(loggedInUser));
@@ -114,6 +198,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         isLoading,
         signUp,
+        verifyEmail,
         signIn,
         signOut,
       }}
