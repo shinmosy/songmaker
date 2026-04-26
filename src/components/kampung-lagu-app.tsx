@@ -120,7 +120,7 @@ const defaultDraft: Draft = {
 
 export default function SongMakerApp() {
   const router = useRouter();
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, signOut } = useAuth();
 
   const [view, setView] = useState<View>("create");
   const [draft, setDraft] = useState<Draft>(defaultDraft);
@@ -818,6 +818,20 @@ ${draft.description}
                   className="w-full"
                 />
               </div>
+
+              {user && (
+                <div className="pt-6 border-t border-gray-200">
+                  <button
+                    onClick={async () => {
+                      await signOut();
+                      router.push("/signin");
+                    }}
+                    className="w-full px-4 py-3 bg-red-50 text-red-600 font-medium rounded-lg hover:bg-red-100 transition-colors"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}

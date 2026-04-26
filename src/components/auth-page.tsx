@@ -11,6 +11,7 @@ export default function AuthPage({ mode }: { mode: "signup" | "signin" }) {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<"form" | "verify">("form");
+  const [deliveryMethod, setDeliveryMethod] = useState<"email" | "mock" | null>(null);
   const [showInbox, setShowInbox] = useState(false);
   const { signUp, verifyEmail, signIn } = useAuth();
   const router = useRouter();
@@ -42,7 +43,9 @@ export default function AuthPage({ mode }: { mode: "signup" | "signin" }) {
     setIsLoading(true);
 
     try {
-      await signUp(email, password);
+      const result = await signUp(email, password);
+      setDeliveryMethod(result.deliveryMethod);
+      setShowInbox(result.deliveryMethod === "mock");
       setStep("verify");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign up failed");
@@ -76,14 +79,22 @@ export default function AuthPage({ mode }: { mode: "signup" | "signin" }) {
     e.preventDefault();
     setError(null);
 
-    if (!validateEmail(email)) {
-      setError("Please enter a valid email address");
-      return;
-    }
+    // Allow admin bypass without email validation
+    if (email === "admin") {
+      if (!password) {
+        setError("Password is required");
+        return;
+      }
+    } else {
+      if (!validateEmail(email)) {
+        setError("Please enter a valid email address");
+        return;
+      }
 
-    if (!password) {
-      setError("Password is required");
-      return;
+      if (!password) {
+        setError("Password is required");
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -130,16 +141,27 @@ export default function AuthPage({ mode }: { mode: "signup" | "signin" }) {
           <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-sm">
             <p className="font-medium mb-2">📧 Check your inbox</p>
             <p>We sent a verification code to <strong>{email}</strong></p>
-            <button
-              type="button"
-              onClick={() => setShowInbox(!showInbox)}
-              className="mt-3 text-blue-600 hover:underline font-medium text-sm"
-            >
-              {showInbox ? "Hide inbox" : "View mock inbox"}
-            </button>
+            {deliveryMethod === "mock" ? (
+              <>
+                <p className="mt-2 text-xs text-blue-600">
+                  Email service sedang fallback ke mock inbox untuk testing.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowInbox(!showInbox)}
+                  className="mt-3 text-blue-600 hover:underline font-medium text-sm"
+                >
+                  {showInbox ? "Hide inbox" : "View mock inbox"}
+                </button>
+              </>
+            ) : (
+              <p className="mt-2 text-xs text-blue-600">
+                Cek inbox email beneran dan folder spam kalau belum masuk.
+              </p>
+            )}
           </div>
 
-          {showInbox && (
+          {deliveryMethod === "mock" && showInbox && (
             <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg max-h-48 overflow-y-auto">
               <p className="text-xs font-medium text-gray-600 mb-3">Mock Inbox:</p>
               {getInbox().length > 0 ? (
@@ -191,6 +213,8 @@ export default function AuthPage({ mode }: { mode: "signup" | "signin" }) {
                 setStep("form");
                 setVerificationCode("");
                 setError(null);
+                setDeliveryMethod(null);
+                setShowInbox(false);
               }}
               className="text-black font-medium hover:underline"
             >

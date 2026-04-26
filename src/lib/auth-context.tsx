@@ -16,10 +16,15 @@ interface PendingSignUp {
   createdAt: number;
 }
 
+interface SignUpResult {
+  verificationCode: string;
+  deliveryMethod: "email" | "mock";
+}
+
 interface AuthContextType {
   user: MockUser | null;
   isLoading: boolean;
-  signUp: (email: string, password: string) => Promise<{ verificationCode: string }>;
+  signUp: (email: string, password: string) => Promise<SignUpResult>;
   verifyEmail: (email: string, code: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -49,7 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string): Promise<SignUpResult> => {
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -87,19 +92,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       JSON.stringify(pendingSignUps)
     );
 
-    // Store in mock inbox
-    const inbox = JSON.parse(localStorage.getItem("songmaker-inbox") || "[]");
-    inbox.push({
-      id: `email-${Date.now()}`,
-      to: email,
-      subject: "Verify your SongMaker account",
-      body: `Your verification code is: ${verificationCode}`,
-      code: verificationCode,
-      timestamp: new Date().toISOString(),
-    });
-    localStorage.setItem("songmaker-inbox", JSON.stringify(inbox));
+    let deliveryMethod: SignUpResult["deliveryMethod"] = "email";
 
-    return { verificationCode };
+    // Send verification email via API
+    try {
+      const response = await fetch("/api/send-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, verificationCode }),
+      });
+
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          payload?.detail || payload?.error || "Failed to send verification email"
+        );
+      }
+
+      const inbox = JSON.parse(localStorage.getItem("songmaker-inbox") || "[]");
+      const filteredInbox = inbox.filter(
+        (message: { to?: string }) => message.to !== email
+      );
+      localStorage.setItem("songmaker-inbox", JSON.stringify(filteredInbox));
+    } catch (error) {
+      console.error("Email send error:", error);
+      deliveryMethod = "mock";
+
+      // Fallback: store in mock inbox for testing
+      const inbox = JSON.parse(localStorage.getItem("songmaker-inbox") || "[]");
+      inbox.push({
+        id: `email-${Date.now()}`,
+        to: email,
+        subject: "Verify your SongMaker account",
+        body: `Your verification code is: ${verificationCode}`,
+        code: verificationCode,
+        timestamp: new Date().toISOString(),
+      });
+      localStorage.setItem("songmaker-inbox", JSON.stringify(inbox));
+    }
+
+    return { verificationCode, deliveryMethod };
   };
 
   const verifyEmail = async (email: string, code: string) => {
